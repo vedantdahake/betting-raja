@@ -49,7 +49,13 @@
       <div class="logo">Predict the match. Rule the leaderboard.</div>
       <div class="user-info">
         <span id="welcome"></span>
-        <button onclick="logout()">Logout</button>
+        <div class="settings-menu-container">
+          <button class="settings-btn" onclick="toggleSettingsMenu()">☰</button>
+          <div class="settings-dropdown" id="settings-dropdown">
+            <button onclick="showAboutUs()">About Us</button>
+            <button onclick="logout()">Logout</button>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -73,8 +79,87 @@
     </div>
 
   </div>
+
+  <div id="about-section" class="about-container" style="display: none;">
+    <div class="about-content">
+      <button class="back-btn" onclick="hideAboutUs()">← Back to Dashboard</button>
+
+      <h2>🏏 About Us</h2> 
+
+      <h3>😎 Who are we?</h3>
+      <p>We’re just a bunch of IPL fanatics who got tired of screaming “I KNEW IT!” at the TV… with zero proof.<br>
+      So we built this app 😏</p>
+
+      <p>Now you can predict match winners, earn points, and finally show your friends that your cricket “gyaan” is actually elite.</p>
+
+      <p>No cash, no stress — just pure cricket vibes and leaderboard domination.</p>
+
+      <hr>
+
+      <h3>🎯 How it works (aka rules but make it fun)</h3>
+      <ul>
+        <li>Every day, a fresh IPL match pops up.</li>
+        <li>You pick the team you <em>think</em> will win. (Trust your gut… or your WhatsApp group predictions 😄)</li>
+        <li>Once the match ends, we update:
+          <ul>
+            <li>🟢 Your points</li>
+            <li>🏆 The leaderboard (where legends rise and excuses begin)</li>
+          </ul>
+        </li>
+      </ul>
+
+      <p>Simple. Predict → Watch → Flex.</p>
+
+      <hr>
+
+      <h3>⚠️ The Important Stuff (don’t skip this 👇)</h3>
+
+      <p><strong>🚫 THIS IS NOT A MONEY-BASED GAME 🚫</strong><br>
+      Read that again. No deposits. No withdrawals. No “bhai paisa double ho gaya?” here.</p>
+
+      <p><strong>🧠 THIS IS A GAME OF SKILL, NOT CHANCE 🧠</strong><br>
+      Your cricket knowledge = your weapon.<br>
+      Stats, form, pitch, luck (okay maybe a little 😜)… it’s all on you.</p>
+
+      <hr>
+
+      <h3>🏆 Final Word</h3>
+
+      <p>This app is all about fun, friendly competition, and proving you’re the ultimate IPL mastermind.</p>
+
+      <p>So go ahead… make your predictions, climb the leaderboard, and enjoy the game like never before 💥</p>
+
+      <h3>💌 Message from the Founder</h3> 
+
+      <p>Dear Sattori legends 😎,</p>
+
+      <p>If you’re here, it means one thing — you either know cricket really well… or you’re very confident for no reason 😂</p>
+
+      <p>Either way, welcome.</p>
+
+      <p>I made this app for people like us — the ones who predict match results before the toss, argue with commentators from the couch, and still say <em>“bhai script hi fixed hai”</em> when we’re wrong 🤡</p>
+
+      <p>But here’s the twist — now you’ve got to prove it. No more empty claims. Only points. Only leaderboard. Only respect 🏆</p>
+
+      <p>And remember:<br>
+      No money involved… so no crying later 😏<br>
+      Just skill, vibes, and a little bit of overconfidence.</p>
+
+      <p>So go on, make your predictions…<br>
+      Win big (in points 😜),<br>
+      And most importantly — don’t blame me when your “sure-shot” team loses.</p>
+
+      <p>Yours in cricket and chaos,<br>
+      Vedant Dahake<span onclick="showSecret('bakla.jpg')" style="cursor: pointer;" title="Shh...">👻</span></p>
+    </div>
+  </div>
+
+  <div id="secret-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.9); z-index: 9999; justify-content: center; align-items: center; cursor: pointer;" onclick="hideSecret()">
+    <img id="secret-img" src="bakla.jpg" style="max-width: 90%; max-height: 90%; border-radius: 12px; box-shadow: 0 0 40px rgba(255,255,255,0.4); animation: fadeIn 0.5s ease;">
+  </div>
+
   <footer class="footer">
-    © 2026 | Ghost Mind Creatives
+    © 2026 | <span onclick="showSecret('bakla.jpg')" style="cursor: pointer;" title="Secret...">Ghost</span> <span onclick="showSecret('dhoni.jpg')" style="cursor: pointer;" title="Thala for a reason...">Mind</span> <span onclick="showSecret('jetha.jpg')" style="cursor: pointer;" title="Jethalal...">Creatives</span>
   </footer>
 
 
@@ -195,7 +280,45 @@
     async function logout() {
       await supabaseClient.auth.signOut();
       document.getElementById("dashboard").style.display = "none";
+      document.getElementById("about-section").style.display = "none";
       document.getElementById("auth-section").style.display = "block";
+    }
+
+    function toggleSettingsMenu() {
+      const dropdown = document.getElementById("settings-dropdown");
+      dropdown.style.display = dropdown.style.display === "block" ? "none" : "block";
+    }
+
+    // Close the dropdown if the user clicks outside of it
+    window.onclick = function(event) {
+      if (!event.target.matches('.settings-btn')) {
+        const dropdowns = document.getElementsByClassName("settings-dropdown");
+        for (let i = 0; i < dropdowns.length; i++) {
+          let openDropdown = dropdowns[i];
+          if (openDropdown.style.display === "block") {
+            openDropdown.style.display = "none";
+          }
+        }
+      }
+    }
+
+    function showAboutUs() {
+      document.getElementById("dashboard").style.display = "none";
+      document.getElementById("about-section").style.display = "block";
+    }
+
+    function hideAboutUs() {
+      document.getElementById("about-section").style.display = "none";
+      document.getElementById("dashboard").style.display = "block";
+    }
+
+    function showSecret(imageSrc) {
+      document.getElementById("secret-img").src = imageSrc;
+      document.getElementById("secret-modal").style.display = "flex";
+    }
+
+    function hideSecret() {
+      document.getElementById("secret-modal").style.display = "none";
     }
 
     async function createUserIfNotExists(user) {

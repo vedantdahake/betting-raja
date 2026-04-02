@@ -317,4 +317,116 @@ button:hover {
   gap: 10px;
 }
 
+/* ===== Settings Menu ===== */
+.settings-menu-container {
+  position: relative;
+  display: inline-block;
+}
+
+.settings-btn {
+  font-size: 24px;
+  padding: 2px 10px;
+  background: transparent !important;
+  border: none !important;
+  cursor: pointer;
+  color: #e6edf3;
+  transition: transform 0.2s;
+}
+
+.settings-btn:hover {
+  transform: scale(1.1);
+}
+
+.settings-dropdown {
+  display: none;
+  position: absolute;
+  right: 0;
+  top: 100%;
+  margin-top: 5px;
+  background-color: #161b22;
+  min-width: 140px;
+  box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.8);
+  z-index: 10;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.settings-dropdown button {
+  color: #e6edf3 !important;
+  padding: 12px 16px !important;
+  text-decoration: none;
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: none !important;
+  border: none !important;
+  border-radius: 0 !important;
+  font-size: 16px;
+}
+
+.settings-dropdown button:hover {
+  background-color: #30363d !important;
+  transform: none !important;
+}
+
+/* ===== About Us Section ===== */
+.about-container {
+  max-width: 800px;
+  margin: 0 auto 30px auto;
+  animation: fadeIn 0.4s ease;
+}
+
+.about-content {
+  background: #161b22;
+  padding: 30px 40px;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.6);
+  line-height: 1.6;
+}
+
+.about-content h2,
+.about-content h3 {
+  color: #38bdf8;
+  margin-top: 25px;
+}
+
+.about-content p {
+  color: #c9d1d9;
+  font-size: 16px;
+}
+
+.about-content ul {
+  color: #c9d1d9;
+  font-size: 16px;
+  padding-left: 20px;
+}
+
+.about-content li {
+  margin-bottom: 8px;
+}
+
+.about-content hr {
+  border: 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  margin: 25px 0;
+}
+
+.back-btn {
+  background: transparent !important;
+  border: none !important;
+  color: #38bdf8 !important;
+  padding: 0 !important;
+  font-size: 16px !important;
+  text-decoration: none;
+  margin-bottom: 20px !important;
+  display: inline-block;
+}
+
+.back-btn:hover {
+  transform: translateX(-5px) !important;
+  color: #58a6ff !important;
+}
+
 /* working 12:09 */
