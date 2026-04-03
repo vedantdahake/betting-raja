@@ -59,7 +59,7 @@ h3 {
   font-weight: 500;
 }
 
-.right-panel p {
+#points {
   font-size: 32px;
   font-weight: 700;
   margin-top: 10px;
@@ -96,7 +96,7 @@ h3 {
   border-radius: 12px;
   padding: 20px;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
-  height: 370px;
+  height: 420px;
   /* Adjusted to fit viewport */
   display: flex;
   flex-direction: column;
@@ -245,8 +245,20 @@ button:hover {
   flex-direction: column;
 }
 
+.disclaimer-msg {
+  margin-top: 15px;
+  font-size: 14px;
+  color: #fca5a5;
+  background: rgba(239, 68, 68, 0.1);
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  line-height: 1.4;
+}
+
 #matches,
-#leaderboard {
+#leaderboard,
+.disclaimer-msg {
   flex: 1;
   /* adjust if needed */
   overflow-y: auto;
@@ -255,13 +267,19 @@ button:hover {
 }
 
 #matches::-webkit-scrollbar,
-#leaderboard::-webkit-scrollbar {
+#leaderboard::-webkit-scrollbar,
+.disclaimer-msg::-webkit-scrollbar {
   width: 6px;
 }
 
 #matches::-webkit-scrollbar-thumb,
 #leaderboard::-webkit-scrollbar-thumb {
   background: #334155;
+  border-radius: 10px;
+}
+
+.disclaimer-msg::-webkit-scrollbar-thumb {
+  background: rgba(239, 68, 68, 0.3);
   border-radius: 10px;
 }
 
