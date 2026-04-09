@@ -466,7 +466,7 @@
     }
     async function loadMatches(user) {
 
-      const ADMIN_EMAIL = "vedantdahake346@gmail.com";
+      const ADMIN_EMAILS = ["vedantdahake346@gmail.com", "mnothing237@gmail.com"];
 
       const { data } = await supabaseClient
         .from("matches")
@@ -520,7 +520,7 @@
 
         let adminButtons = "";
 
-        if (user.email === ADMIN_EMAIL) {
+        if (ADMIN_EMAILS.includes(user.email)) {
           adminButtons = `
         <button onclick="settle('${match.id}', '${match.team_a}')">
           Set Winner: ${match.team_a}
