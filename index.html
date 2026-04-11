@@ -490,6 +490,25 @@
 
       const ADMIN_EMAILS = ["vedantdahake346@gmail.com", "mnothing237@gmail.com"];
 
+      // IPL team color map (key = lowercase team name)
+      const TEAM_COLORS = {
+        "chennai super kings": "#F7DC00", "csk": "#F7DC00",
+        "mumbai indians":      "#004BA0", "mi":  "#004BA0",
+        "royal challengers bangalore": "#EC1C24", "rcb": "#EC1C24",
+        "royal challengers bengaluru": "#EC1C24",
+        "kolkata knight riders": "#3A225D", "kkr": "#3A225D",
+        "delhi capitals":      "#2563EB", "dc":  "#2563EB",
+        "rajasthan royals":    "#EA1A85", "rr":  "#EA1A85",
+        "sunrisers hyderabad": "#FF822A", "srh": "#FF822A",
+        "punjab kings":        "#A50000", "pbks":"#A50000",
+        "lucknow super giants":"#00AEEF", "lsg": "#00AEEF",
+        "gujarat titans":      "#1C1C1C", "gt":  "#1C1C1C",
+      };
+
+      function teamColor(name) {
+        return TEAM_COLORS[name.toLowerCase().trim()] || "#334155";
+      }
+
       const { data } = await supabaseClient
         .from("matches")
         .select("*")
@@ -498,20 +517,12 @@
       const container = document.getElementById("matches");
       container.innerHTML = "";
       if (!data || data.length === 0) {
-        container.innerHTML = `
-    <div class="empty-state">
-      No upcoming matches.
-    </div>
-  `;
+        container.innerHTML = `<div class="empty-state">No upcoming matches. 🏏</div>`;
         return;
       }
 
-
       for (let match of data) {
 
-        const div = document.createElement("div");
-
-        // 🔹 Check if user already predicted
         const { data: existing } = await supabaseClient
           .from("predictions")
           .select("*")
@@ -519,51 +530,69 @@
           .eq("match_id", match.id)
           .single();
 
-        let predictionInfo = existing
-          ? `<p>Your Prediction: <b>${existing.predicted_winner}</b></p>`
-          : "";
+        const matchTimePassed = match.match_date && new Date(match.match_date) < new Date();
+        const canPredict = !existing && !matchTimePassed;
 
-        // 🔹 Lock prediction if match time passed
-        const matchTimePassed =
-          match.match_date && new Date(match.match_date) < new Date();
-
-        let predictButtons = "";
-
-        if (!existing && !matchTimePassed) {
-          predictButtons = `
-        <button onclick="predict('${match.id}', '${match.team_a}')">
-          Predict ${match.team_a}
-        </button>
-        <button onclick="predict('${match.id}', '${match.team_b}')">
-          Predict ${match.team_b}
-        </button>
-      `;
+        let timeStr = "TBD";
+        if (match.match_date) {
+          const d = new Date(match.match_date);
+          timeStr = d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", hour12: true });
         }
 
-        let adminButtons = "";
+        const colorA = teamColor(match.team_a);
+        const colorB = teamColor(match.team_b);
 
-        if (ADMIN_EMAILS.includes(user.email)) {
-          adminButtons = `
-        <button onclick="settle('${match.id}', '${match.team_a}')">
-          Set Winner: ${match.team_a}
-        </button>
-        <button onclick="settle('${match.id}', '${match.team_b}')">
-          Set Winner: ${match.team_b}
-        </button>
-      `;
+        const isAdmin = ADMIN_EMAILS.includes(user.email);
+        const adminHtml = isAdmin ? `
+          <div class="mc-admin-row">
+            <button class="mc-admin-btn" style="border-color:${colorA};" onclick="settle('${match.id}', '${match.team_a}')">SET WINNER ${match.team_a.toUpperCase()}</button>
+            <button class="mc-admin-btn" style="border-color:${colorB};" onclick="settle('${match.id}', '${match.team_b}')">SET WINNER ${match.team_b.toUpperCase()}</button>
+          </div>` : "";
+
+        // Build Row Content based on state
+        let rowHtml = "";
+        if (canPredict) {
+          rowHtml = `
+            <button class="mc-btn" style="background:${colorA};" onclick="predict('${match.id}', '${match.team_a}')">PREDICT ${match.team_a.toUpperCase()}</button>
+            <span class="mc-time">${timeStr}</span>
+            <button class="mc-btn" style="background:${colorB};" onclick="predict('${match.id}', '${match.team_b}')">PREDICT ${match.team_b.toUpperCase()}</button>
+          `;
+        } else if (existing) {
+          const pickedTeam = existing.predicted_winner;
+          const pickedColor = teamColor(pickedTeam);
+          rowHtml = `
+            <div class="mc-prediction-status">
+              <div class="mc-pick-indicator" style="background: ${pickedColor};">
+                YOUR PICK: ${pickedTeam.toUpperCase()}
+              </div>
+              <span class="mc-time-faded">${timeStr}</span>
+            </div>
+          `;
+        } else {
+          // Locked - no prediction
+          rowHtml = `
+            <div class="mc-prediction-status">
+              <div class="mc-locked-indicator">🔒 LOCKED</div>
+              <span class="mc-time-faded">${timeStr}</span>
+            </div>
+          `;
         }
 
-        div.innerHTML = `
-      <p>${match.team_a} vs ${match.team_b}</p>
-      ${predictionInfo}
-      ${predictButtons}
-      ${adminButtons}
-      <hr>
-    `;
-
-        container.appendChild(div);
+        const card = document.createElement("div");
+        card.className = "mc-card";
+        card.innerHTML = `
+          <div class="mc-title">${match.team_a.toUpperCase()} VS ${match.team_b.toUpperCase()}</div>
+          <div class="mc-row">
+            ${rowHtml}
+          </div>
+          ${adminHtml}
+        `;
+        container.appendChild(card);
       }
     }
+
+
+
 
 
     async function settle(matchId, winnerTeam) {
