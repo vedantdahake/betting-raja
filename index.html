@@ -55,6 +55,8 @@
           <div class="settings-menu-container">
             <button class="settings-btn" onclick="toggleSettingsMenu()">☰</button>
             <div class="settings-dropdown" id="settings-dropdown">
+              <button onclick="showPublicPolls()">Public Polls</button>
+              <button id="add-match-menu-btn" onclick="showAddMatch()" style="display: none;">Add Match</button>
               <button onclick="showAboutUs()">About Us</button>
               <button onclick="logout()">Logout</button>
             </div>
@@ -179,6 +181,75 @@
     </div>
   </div>
 
+  <!-- ===== Public Polls Section ===== -->
+  <div id="public-polls-section" class="about-container" style="display: none;">
+    <div class="about-content">
+      <button class="back-btn" onclick="hidePublicPolls()">← Back to Dashboard</button>
+      <h2>🗳️ Public Polls</h2>
+      <p style="color: #9da7b3; font-size: 14px; margin-top: -15px; margin-bottom: 20px;">Predictions revealed after match time. 🏏</p>
+      <div id="public-polls-content">
+        Loading...
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== Add Match Section (Admin Only) ===== -->
+  <div id="add-match-section" class="about-container" style="display: none;">
+    <div class="about-content">
+      <button class="back-btn" onclick="hideAddMatch()">← Back to Dashboard</button>
+      <h2>🏏 Add Match</h2>
+      <p style="color: #9da7b3; font-size: 14px; margin-top: -15px; margin-bottom: 25px;">Admin panel — add a new upcoming match.</p>
+
+      <div class="am-form">
+        <div class="am-field">
+          <label class="am-label">Team 1</label>
+          <select id="am-team-a" class="am-select">
+            <option value="" disabled selected>Select Team 1</option>
+            <option value="CSK">CSK</option>
+            <option value="MI">MI</option>
+            <option value="RCB">RCB</option>
+            <option value="KKR">KKR</option>
+            <option value="DC">DC</option>
+            <option value="RR">RR</option>
+            <option value="SRH">SRH</option>
+            <option value="PBKS">PBKS</option>
+            <option value="LSG">LSG</option>
+            <option value="GT">GT</option>
+          </select>
+        </div>
+
+        <div class="am-field">
+          <label class="am-label">Team 2</label>
+          <select id="am-team-b" class="am-select">
+            <option value="" disabled selected>Select Team 2</option>
+            <option value="CSK">CSK</option>
+            <option value="MI">MI</option>
+            <option value="RCB">RCB</option>
+            <option value="KKR">KKR</option>
+            <option value="DC">DC</option>
+            <option value="RR">RR</option>
+            <option value="SRH">SRH</option>
+            <option value="PBKS">PBKS</option>
+            <option value="LSG">LSG</option>
+            <option value="GT">GT</option>
+          </select>
+        </div>
+
+        <div class="am-field">
+          <label class="am-label">Match Date & Time</label>
+          <input type="datetime-local" id="am-match-date" class="am-datetime">
+        </div>
+
+        <div class="am-field am-status-row">
+          <span class="am-label">Status</span>
+          <span class="am-status-badge">UPCOMING</span>
+        </div>
+
+        <button class="am-submit-btn" onclick="submitNewMatch()">Add Match</button>
+      </div>
+    </div>
+  </div>
+
   <div id="secret-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.9); z-index: 9999; justify-content: center; align-items: center; cursor: pointer;" onclick="hideSecret()">
     <img id="secret-img" src="bakla.jpg" style="max-width: 90%; max-height: 90%; border-radius: 12px; box-shadow: 0 0 40px rgba(255,255,255,0.4); animation: fadeIn 0.5s ease;">
   </div>
@@ -197,6 +268,40 @@
       "https://snmcwwpwfmzubcklljlk.supabase.co",
       "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNubWN3d3B3Zm16dWJja2xsamxrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA5ODg0NTYsImV4cCI6MjA4NjU2NDQ1Nn0.hxLrOibSZv4f2tDGQTFom4bFfIksBkM0iMxrnXq4uPg"
     );
+
+    let upcomingMatchesData = [];
+
+    function updateAllCountdowns() {
+      const now = new Date();
+      upcomingMatchesData.forEach(match => {
+        const el = document.getElementById(`cd-${match.id}`);
+        if (!el) return;
+
+        const matchDate = new Date(match.match_date);
+        const diff = matchDate - now;
+
+        if (diff <= 0) {
+          el.innerHTML = "MATCH STARTED";
+          el.style.color = "#9da7b3";
+          return;
+        }
+
+        const hours = Math.floor(diff / (1000 * 60 * 60));
+        const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+        const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
+        el.innerHTML = `${hours}hr ${minutes}min ${seconds}s left`;
+        
+        // Change color if less than 2 hours (120 minutes)
+        if (diff < 2 * 60 * 60 * 1000) {
+          el.style.color = "#ef4444"; 
+        } else {
+          el.style.color = "#ffffff";
+        }
+      });
+    }
+
+    setInterval(updateAllCountdowns, 1000);
 
     window.onload = async () => {
       const { data } = await supabaseClient.auth.getSession();
@@ -327,6 +432,8 @@
       document.getElementById("dashboard").style.display = "none";
       document.getElementById("about-section").style.display = "none";
       document.getElementById("live-score-section").style.display = "none";
+      document.getElementById("public-polls-section").style.display = "none";
+      document.getElementById("add-match-section").style.display = "none";
       document.getElementById("auth-section").style.display = "block";
     }
 
@@ -351,12 +458,175 @@
     function showAboutUs() {
       document.getElementById("dashboard").style.display = "none";
       document.getElementById("live-score-section").style.display = "none";
+      document.getElementById("public-polls-section").style.display = "none";
+      document.getElementById("add-match-section").style.display = "none";
       document.getElementById("about-section").style.display = "block";
     }
 
     function hideAboutUs() {
       document.getElementById("about-section").style.display = "none";
       document.getElementById("dashboard").style.display = "block";
+    }
+
+    // ===== Public Polls =====
+    function showPublicPolls() {
+      document.getElementById("dashboard").style.display = "none";
+      document.getElementById("about-section").style.display = "none";
+      document.getElementById("live-score-section").style.display = "none";
+      document.getElementById("add-match-section").style.display = "none";
+      document.getElementById("public-polls-section").style.display = "block";
+      loadPublicPolls();
+    }
+
+    function hidePublicPolls() {
+      document.getElementById("public-polls-section").style.display = "none";
+      document.getElementById("dashboard").style.display = "block";
+    }
+
+    // ===== Add Match (Admin) =====
+    function showAddMatch() {
+      document.getElementById("dashboard").style.display = "none";
+      document.getElementById("about-section").style.display = "none";
+      document.getElementById("live-score-section").style.display = "none";
+      document.getElementById("public-polls-section").style.display = "none";
+      document.getElementById("add-match-section").style.display = "block";
+    }
+
+    function hideAddMatch() {
+      document.getElementById("add-match-section").style.display = "none";
+      document.getElementById("dashboard").style.display = "block";
+    }
+
+    async function submitNewMatch() {
+      const teamA = document.getElementById("am-team-a").value;
+      const teamB = document.getElementById("am-team-b").value;
+      const matchDate = document.getElementById("am-match-date").value;
+
+      if (!teamA || !teamB || !matchDate) {
+        alert("Please fill all fields.");
+        return;
+      }
+
+      if (teamA === teamB) {
+        alert("Team 1 and Team 2 cannot be the same.");
+        return;
+      }
+
+      const confirmAdd = confirm(`Add match: ${teamA.toUpperCase()} vs ${teamB.toUpperCase()}?`);
+      if (!confirmAdd) return;
+
+      const { error } = await supabaseClient.from("matches").insert([{
+        team_a: teamA,
+        team_b: teamB,
+        match_date: matchDate,
+        status: "upcoming",
+        winner: null
+      }]);
+
+      if (error) {
+        alert("Error: " + error.message);
+      } else {
+        alert("Match added successfully!");
+        // Reset form
+        document.getElementById("am-team-a").selectedIndex = 0;
+        document.getElementById("am-team-b").selectedIndex = 0;
+        document.getElementById("am-match-date").value = "";
+        // Go back to dashboard and refresh matches
+        hideAddMatch();
+        const { data: sessionData } = await supabaseClient.auth.getSession();
+        if (sessionData.session) loadMatches(sessionData.session.user);
+      }
+    }
+
+    async function loadPublicPolls() {
+      const TEAM_COLORS = {
+        "chennai super kings": "#F7DC00", "csk": "#F7DC00",
+        "mumbai indians":      "#004BA0", "mi":  "#004BA0",
+        "royal challengers bangalore": "#EC1C24", "rcb": "#EC1C24",
+        "royal challengers bengaluru": "#EC1C24",
+        "kolkata knight riders": "#3A225D", "kkr": "#3A225D",
+        "delhi capitals":      "#2563EB", "dc":  "#2563EB",
+        "rajasthan royals":    "#EA1A85", "rr":  "#EA1A85",
+        "sunrisers hyderabad": "#FF822A", "srh": "#FF822A",
+        "punjab kings":        "#A50000", "pbks":"#A50000",
+        "lucknow super giants":"#00AEEF", "lsg": "#00AEEF",
+        "gujarat titans":      "#1C1C1C", "gt":  "#1C1C1C",
+      };
+      function teamColor(name) {
+        return TEAM_COLORS[name.toLowerCase().trim()] || "#38bdf8";
+      }
+
+      const contentDiv = document.getElementById("public-polls-content");
+      contentDiv.innerHTML = `<div style="text-align:center; color:#9da7b3; padding:20px;">Loading predictions...</div>`;
+
+      try {
+        // Fetch all upcoming matches
+        const { data: matches, error: mErr } = await supabaseClient
+          .from("matches")
+          .select("*")
+          .eq("status", "upcoming");
+
+        if (mErr) throw mErr;
+
+        const now = new Date();
+        // Filter: only show matches whose match_date has passed
+        const expiredMatches = (matches || []).filter(m => m.match_date && new Date(m.match_date) < now);
+
+        if (expiredMatches.length === 0) {
+          contentDiv.innerHTML = `<div class="pp-empty">No predictions available yet. Polls open after match time. 🏏</div>`;
+          return;
+        }
+
+        let html = '';
+
+        for (const match of expiredMatches) {
+          // Fetch all predictions for this match along with user names
+          const { data: predictions, error: pErr } = await supabaseClient
+            .from("predictions")
+            .select("predicted_winner, users(name)")
+            .eq("match_id", match.id);
+
+          if (pErr) continue;
+
+          const colorA = teamColor(match.team_a);
+          const colorB = teamColor(match.team_b);
+
+          html += `<div class="pp-match-card">`;
+          html += `<div class="pp-match-title">`;
+          html += `<span class="pp-team-dot" style="background:${colorA}"></span>`;
+          html += `${match.team_a.toUpperCase()} VS ${match.team_b.toUpperCase()}`;
+          html += `<span class="pp-team-dot" style="background:${colorB}"></span>`;
+          html += `</div>`;
+
+          // Table header (leaderboard style)
+          html += `<div class="pp-header">`;
+          html += `<span class="pp-col-user">USER</span>`;
+          html += `<span class="pp-col-pred">PREDICTED</span>`;
+          html += `</div>`;
+
+          if (!predictions || predictions.length === 0) {
+            html += `<div class="pp-empty-row">No predictions for this match.</div>`;
+          } else {
+            predictions.forEach(p => {
+              const userName = p.users?.name || 'Unknown';
+              const predictedTeam = p.predicted_winner;
+              const predColor = teamColor(predictedTeam);
+
+              html += `<div class="pp-row">`;
+              html += `<span class="pp-col-user pp-username">${userName}</span>`;
+              html += `<span class="pp-col-pred pp-predicted" style="color:${predColor}">${predictedTeam.toUpperCase()}</span>`;
+              html += `</div>`;
+            });
+          }
+
+          html += `</div>`; // close pp-match-card
+        }
+
+        contentDiv.innerHTML = html;
+      } catch (err) {
+        console.error('Public polls error:', err);
+        contentDiv.innerHTML = `<div class="pp-empty">⚠️ Failed to load predictions. Please try again later.</div>`;
+      }
     }
 
     function showSecret(imageSrc) {
@@ -371,6 +641,8 @@
     function showLiveScore() {
       document.getElementById("dashboard").style.display = "none";
       document.getElementById("about-section").style.display = "none";
+      document.getElementById("public-polls-section").style.display = "none";
+      document.getElementById("add-match-section").style.display = "none";
       document.getElementById("live-score-section").style.display = "block";
       
       const contentDiv = document.getElementById("live-score-content");
@@ -457,6 +729,8 @@
       }
     }
 
+    const ADMIN_EMAILS = ["vedantdahake346@gmail.com", "mnothing237@gmail.com"];
+
     async function showDashboard(user) {
       document.getElementById("auth-section").style.display = "none";
       document.getElementById("dashboard").style.display = "block";
@@ -482,6 +756,10 @@
         pointsElement.style.color = "#e6edf3";  // neutral
       }
 
+      // Show "Add Match" in menu for admins
+      if (ADMIN_EMAILS.includes(user.email)) {
+        document.getElementById("add-match-menu-btn").style.display = "block";
+      }
 
       loadMatches(user);
       loadLeaderboard();
@@ -489,7 +767,6 @@
     }
     async function loadMatches(user) {
 
-      const ADMIN_EMAILS = ["vedantdahake346@gmail.com", "mnothing237@gmail.com"];
 
       // IPL team color map (key = lowercase team name)
       const TEAM_COLORS = {
@@ -506,8 +783,27 @@
         "gujarat titans":      "#1C1C1C", "gt":  "#1C1C1C",
       };
 
+      // Short names / abbreviations
+      const TEAM_SHORT = {
+        "chennai super kings": "CSK",
+        "mumbai indians": "MI",
+        "royal challengers bangalore": "RCB",
+        "royal challengers bengaluru": "RCB",
+        "kolkata knight riders": "KKR",
+        "delhi capitals": "DC",
+        "rajasthan royals": "RR",
+        "sunrisers hyderabad": "SRH",
+        "punjab kings": "PBKS",
+        "lucknow super giants": "LSG",
+        "gujarat titans": "GT",
+      };
+
       function teamColor(name) {
         return TEAM_COLORS[name.toLowerCase().trim()] || "#334155";
+      }
+
+      function teamShort(name) {
+        return TEAM_SHORT[name.toLowerCase().trim()] || name.toUpperCase();
       }
 
       const { data } = await supabaseClient
@@ -519,8 +815,13 @@
       container.innerHTML = "";
       if (!data || data.length === 0) {
         container.innerHTML = `<div class="empty-state">No upcoming matches. 🏏</div>`;
+        upcomingMatchesData = [];
         return;
       }
+
+      upcomingMatchesData = data;
+      // Trigger initial update
+      setTimeout(updateAllCountdowns, 0);
 
       for (let match of data) {
 
@@ -542,21 +843,23 @@
 
         const colorA = teamColor(match.team_a);
         const colorB = teamColor(match.team_b);
+        const shortA = teamShort(match.team_a);
+        const shortB = teamShort(match.team_b);
 
         const isAdmin = ADMIN_EMAILS.includes(user.email);
         const adminHtml = isAdmin ? `
           <div class="mc-admin-row">
-            <button class="mc-admin-btn" style="border-color:${colorA};" onclick="settle('${match.id}', '${match.team_a}')">SET WINNER ${match.team_a.toUpperCase()}</button>
-            <button class="mc-admin-btn" style="border-color:${colorB};" onclick="settle('${match.id}', '${match.team_b}')">SET WINNER ${match.team_b.toUpperCase()}</button>
+            <button class="mc-admin-btn" style="border-color:${colorA};" onclick="settle('${match.id}', '${match.team_a}')">SET WINNER ${shortA}</button>
+            <button class="mc-admin-btn" style="border-color:${colorB};" onclick="settle('${match.id}', '${match.team_b}')">SET WINNER ${shortB}</button>
           </div>` : "";
 
         // Build Row Content based on state
         let rowHtml = "";
         if (canPredict) {
           rowHtml = `
-            <button class="mc-btn" style="background:${colorA};" onclick="predict('${match.id}', '${match.team_a}')">PREDICT ${match.team_a.toUpperCase()}</button>
+            <button class="mc-btn" style="background:${colorA};" onclick="predict('${match.id}', '${match.team_a}')">PREDICT ${shortA}</button>
             <span class="mc-time">${timeStr}</span>
-            <button class="mc-btn" style="background:${colorB};" onclick="predict('${match.id}', '${match.team_b}')">PREDICT ${match.team_b.toUpperCase()}</button>
+            <button class="mc-btn" style="background:${colorB};" onclick="predict('${match.id}', '${match.team_b}')">PREDICT ${shortB}</button>
           `;
         } else if (existing) {
           const pickedTeam = existing.predicted_winner;
@@ -564,7 +867,7 @@
           rowHtml = `
             <div class="mc-prediction-status">
               <div class="mc-pick-indicator" style="background: ${pickedColor};">
-                YOUR PICK: ${pickedTeam.toUpperCase()}
+                YOUR PICK: ${teamShort(pickedTeam)}
               </div>
               <span class="mc-time-faded">${timeStr}</span>
             </div>
@@ -582,7 +885,10 @@
         const card = document.createElement("div");
         card.className = "mc-card";
         card.innerHTML = `
-          <div class="mc-title">${match.team_a.toUpperCase()} VS ${match.team_b.toUpperCase()}</div>
+          <div class="mc-title">
+            <span>${shortA} VS ${shortB}</span>
+            <span id="cd-${match.id}" class="mc-countdown"></span>
+          </div>
           <div class="mc-row">
             ${rowHtml}
           </div>
