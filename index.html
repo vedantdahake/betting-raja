@@ -593,6 +593,11 @@
           return;
         }
 
+        // Fetch total number of users for non-predictor penalty calculation
+        const { count: totalUsers } = await supabaseClient
+          .from("users")
+          .select("*", { count: 'exact', head: true });
+
         let html = '';
 
         for (const match of expiredMatches) {
@@ -605,6 +610,11 @@
 
           const colorA = teamColor(match.team_a);
           const colorB = teamColor(match.team_b);
+
+          // Count predictions per team
+          const countA = (predictions || []).filter(p => p.predicted_winner.toLowerCase() === match.team_a.toLowerCase()).length;
+          const countB = (predictions || []).filter(p => p.predicted_winner.toLowerCase() === match.team_b.toLowerCase()).length;
+          const nonPredictors = (totalUsers || 0) - countA - countB;
 
           html += `<div class="pp-match-card">`;
           html += `<div class="pp-match-title">`;
@@ -633,6 +643,24 @@
               html += `</div>`;
             });
           }
+
+          // Points projection message
+          const teamAName = match.team_a.toUpperCase();
+          const teamBName = match.team_b.toUpperCase();
+          const pointsIfAWins = countA > 0 ? ((countB + nonPredictors) / countA).toFixed(2) : '—';
+          const pointsIfBWins = countB > 0 ? ((countA + nonPredictors) / countB).toFixed(2) : '—';
+
+          html += `<div class="pp-points-projection">`;
+          html += `<div class="pp-proj-row">`;
+          html += `<span class="pp-proj-dot" style="background:${colorA}"></span>`;
+          html += `<span>If <strong style="color:${colorA}">${teamAName}</strong> wins → each ${teamAName} picker gets <strong class="pp-proj-pts">+${pointsIfAWins}</strong> pts</span>`;
+          html += `</div>`;
+          html += `<div class="pp-proj-row">`;
+          html += `<span class="pp-proj-dot" style="background:${colorB}"></span>`;
+          html += `<span>If <strong style="color:${colorB}">${teamBName}</strong> wins → each ${teamBName} picker gets <strong class="pp-proj-pts">+${pointsIfBWins}</strong> pts</span>`;
+          html += `</div>`;
+          html += `</div>`;
+
           html += `</div>`;
         }
 
