@@ -7,7 +7,6 @@
   --text-main: #ffffff;
 }
 
-
 body {
   background: url('bg.jpg') no-repeat center center fixed;
   background-size: cover;
@@ -39,7 +38,6 @@ body {
   border-radius: 50%;
 }
 
-
 /* ===== Top Bar ===== */
 .top-bar {
   display: flex;
@@ -67,7 +65,6 @@ h3 {
   font-weight: 700;
   margin-top: 10px;
 }
-
 
 .logo {
   font-size: 22px;
@@ -100,41 +97,28 @@ h3 {
   padding: 20px;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
   height: 420px;
-  /* Adjusted to fit viewport */
   display: flex;
   flex-direction: column;
 }
 
-
-/* Old legacy card styles removed to make way for new minimal design */
-
-
 /* ===== Buttons ===== */
 button {
-  background: transparent;
-  color: white;
-  border: 1px solid white;
-  padding: 6px 10px;
-  cursor: pointer;
-  border-radius: 5px;
   background: #21262d;
   color: #e6edf3;
   border: 1px solid rgba(255, 255, 255, 0.08);
   padding: 8px 14px;
   border-radius: 8px;
+  cursor: pointer;
   transition: all 0.2s ease;
 }
 
 button:hover {
-  background: white;
-  color: white;
   background: #30363d;
   transform: translateY(-2px);
 }
 
 /* ===== MOBILE RESPONSIVE ===== */
 @media (max-width: 768px) {
-
   body {
     padding: 15px;
   }
@@ -162,10 +146,35 @@ button:hover {
     display: flex;
     justify-content: space-between;
   }
+
+  /* Compact About/Polls on mobile */
+  .about-content {
+    padding: 20px 15px !important;
+  }
+
+  .pp-match-card {
+    padding: 12px !important;
+    margin-bottom: 15px !important;
+  }
+
+  .pp-row {
+    padding: 8px 12px !important;
+  }
+
+  .pp-col-pred {
+    width: 110px !important;
+  }
+
+  .pp-username {
+    font-size: 15px !important;
+  }
+
+  .pp-predicted {
+    font-size: 14px !important;
+  }
 }
 
 /* ===== Match Cards (minimal) ===== */
-
 .mc-card {
   border-radius: 14px;
   padding: 14px 14px 12px;
@@ -174,7 +183,6 @@ button:hover {
   border: none !important;
 }
 
-/* "PBKS VS SRH" title */
 .mc-title {
   display: flex;
   justify-content: space-between;
@@ -194,7 +202,6 @@ button:hover {
   transition: color 0.3s ease;
 }
 
-/* Inner row: [btn] · time · [btn] */
 .mc-row {
   display: flex;
   align-items: center;
@@ -210,7 +217,6 @@ button:hover {
   flex-shrink: 0;
 }
 
-/* Predict / status buttons */
 .mc-btn {
   background: #334155;
   border: none !important;
@@ -223,7 +229,7 @@ button:hover {
   cursor: pointer;
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
   flex: 1;
-  box-shadow: 0 4px 0px rgba(0,0,0,0.3); /* The 'raised' depth */
+  box-shadow: 0 4px 0px rgba(0,0,0,0.3);
   position: relative;
   top: 0;
 }
@@ -246,7 +252,6 @@ button:hover {
   top: 0 !important;
 }
 
-/* Admin row */
 .mc-admin-row {
   display: flex;
   gap: 8px;
@@ -281,7 +286,6 @@ button:hover {
   box-shadow: 0 1px 0px rgba(0,0,0,0.4);
 }
 
-/* Prediction Status Layout */
 .mc-prediction-status {
   display: flex;
   align-items: center;
@@ -320,10 +324,6 @@ button:hover {
 }
 
 /* ===== Leaderboard Table Layout ===== */
-
-
-
-/* Horizontal scroll wrapper for mobile */
 .lb-scroll-wrapper {
   flex: 1;
   overflow-x: auto;
@@ -345,7 +345,6 @@ button:hover {
   border-radius: 10px;
 }
 
-/* Give the inner table a min-width so it never squishes */
 #leaderboard {
   min-width: 440px;
   display: flex;
@@ -353,7 +352,6 @@ button:hover {
   gap: 8px;
 }
 
-/* Remove old card style from leaderboard divs */
 #leaderboard div {
   background: none !important;
   border: none !important;
@@ -361,7 +359,6 @@ button:hover {
   margin: 0 !important;
 }
 
-/* Header row */
 .lb-header {
   display: flex;
   align-items: center;
@@ -374,7 +371,6 @@ button:hover {
   text-transform: uppercase;
 }
 
-/* Data rows */
 .lb-row {
   display: flex;
   align-items: center;
@@ -391,13 +387,11 @@ button:hover {
   box-shadow: 0 6px 18px rgba(0,0,0,0.5);
 }
 
-/* Current user highlight */
 .lb-row-you {
   border-left: 3px solid #22d3ee !important;
   background: #0d2030 !important;
 }
 
-/* Top rank tints */
 .lb-row-gold  { border-left: 3px solid #fbbf24; background: #1a1708; }
 .lb-row-silver{ border-left: 3px solid #94a3b8; background: #131926; }
 .lb-row-bronze{ border-left: 3px solid #c2714a; background: #1a1210; }
@@ -409,7 +403,6 @@ button:hover {
 .lb-col-losses { width: 68px;  flex-shrink: 0; text-align: right; }
 .lb-col-wr     { width: 80px;  flex-shrink: 0; text-align: right; }
 
-/* Rank number */
 .lb-rank-num {
   font-size: 22px;
   font-weight: 700;
@@ -428,7 +421,6 @@ button:hover {
   gap: 8px;
 }
 
-/* "You" badge */
 .lb-you-badge {
   font-size: 12px;
   font-weight: 700;
@@ -441,7 +433,6 @@ button:hover {
   letter-spacing: 0.05em;
 }
 
-/* Stat values */
 .lb-pts-val {
   font-size: 17px;
   font-weight: 700;
@@ -483,13 +474,8 @@ button:hover {
 }
 
 @keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-
-  to {
-    opacity: 1;
-  }
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 .empty-state {
@@ -511,11 +497,6 @@ button:hover {
   width: max-content;
 }
 
-.center-panel {
-  display: flex;
-  flex-direction: column;
-}
-
 .disclaimer-msg {
   margin-top: 15px;
   font-size: 14px;
@@ -525,16 +506,14 @@ button:hover {
   border-radius: 8px;
   border: 1px solid rgba(239, 68, 68, 0.3);
   line-height: 1.4;
+  overflow-y: auto;
 }
 
 #matches,
-#leaderboard,
-.disclaimer-msg {
+#leaderboard {
   flex: 1;
-  /* adjust if needed */
   overflow-y: auto;
   padding-right: 5px;
-  /* avoids text hiding behind scrollbar */
 }
 
 #matches::-webkit-scrollbar,
@@ -555,7 +534,6 @@ button:hover {
 }
 
 /* ===== AUTH CENTER LAYOUT ===== */
-
 .auth-container {
   min-height: 70vh;
   display: flex;
@@ -574,16 +552,6 @@ button:hover {
   text-align: center;
 }
 
-.auth-card h3 {
-  margin-bottom: 10px;
-}
-
-.auth-note {
-  font-size: 13px;
-  color: #9da7b3;
-  margin-bottom: 25px;
-}
-
 .auth-card input {
   width: 100%;
   padding: 10px 12px;
@@ -592,7 +560,7 @@ button:hover {
   border: 1px solid rgba(255, 255, 255, 0.08);
   background: #0d1117;
   color: #e6edf3;
-  font-family: 'Josefin Sans', sans-serif;
+  font-family: inherit;
 }
 
 .auth-card input:focus {
@@ -644,7 +612,6 @@ button:hover {
 .settings-dropdown button {
   color: #e6edf3 !important;
   padding: 12px 16px !important;
-  text-decoration: none;
   display: block;
   width: 100%;
   text-align: left;
@@ -656,7 +623,6 @@ button:hover {
 
 .settings-dropdown button:hover {
   background-color: #30363d !important;
-  transform: none !important;
 }
 
 /* ===== About Us Section ===== */
@@ -675,25 +641,14 @@ button:hover {
   line-height: 1.6;
 }
 
-.about-content h2,
-.about-content h3 {
+.about-content h2, .about-content h3 {
   color: #38bdf8;
   margin-top: 25px;
 }
 
-.about-content p {
+.about-content p, .about-content ul {
   color: #c9d1d9;
   font-size: 16px;
-}
-
-.about-content ul {
-  color: #c9d1d9;
-  font-size: 16px;
-  padding-left: 20px;
-}
-
-.about-content li {
-  margin-bottom: 8px;
 }
 
 .about-content hr {
@@ -708,14 +663,8 @@ button:hover {
   color: #38bdf8 !important;
   padding: 0 !important;
   font-size: 16px !important;
-  text-decoration: none;
   margin-bottom: 20px !important;
   display: inline-block;
-}
-
-.back-btn:hover {
-  transform: translateX(-5px) !important;
-  color: #58a6ff !important;
 }
 
 /* ===== Live Score Button ===== */
@@ -730,18 +679,12 @@ button:hover {
   animation: pulse 2s infinite;
 }
 
-.live-score-btn:hover {
-  transform: translateY(-2px) scale(1.05) !important;
-  box-shadow: 0 6px 20px rgba(225, 29, 72, 0.6) !important;
-}
-
 @keyframes pulse {
   0% { box-shadow: 0 0 0 0 rgba(225, 29, 72, 0.7); }
   70% { box-shadow: 0 0 0 10px rgba(225, 29, 72, 0); }
   100% { box-shadow: 0 0 0 0 rgba(225, 29, 72, 0); }
 }
 
-/* working 12:09 */
 .brand-name {
   font-family: var(--font-logo), 'Press Start 2P', system-ui;
   font-weight: 700;
@@ -753,15 +696,14 @@ button:hover {
   display: inline-block;
 }
 
-/* ===== Public Polls ===== */
-
+/* ===== Public Polls (Concise) ===== */
 .pp-match-card {
   background: #161b22;
   border: 1px solid rgba(255, 255, 255, 0.06);
   border-radius: 12px;
-  padding: 20px;
-  margin-bottom: 20px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  padding: 16px;
+  margin-bottom: 16px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.4);
 }
 
 .pp-match-title {
@@ -769,12 +711,12 @@ button:hover {
   align-items: center;
   justify-content: center;
   gap: 10px;
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 800;
   color: #ffffff;
   letter-spacing: 0.08em;
-  margin-bottom: 16px;
-  padding-bottom: 12px;
+  margin-bottom: 12px;
+  padding-bottom: 10px;
   border-bottom: 1px solid #333;
 }
 
@@ -786,51 +728,33 @@ button:hover {
   flex-shrink: 0;
 }
 
-/* Header row — mirrors .lb-header */
 .pp-header {
   display: flex;
   align-items: center;
-  padding: 8px 16px;
-  margin-bottom: 8px;
+  padding: 6px 16px;
+  margin-bottom: 6px;
   color: #6b7a8d;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
 
-/* Data rows — mirrors .lb-row */
 .pp-row {
   display: flex;
   align-items: center;
   background: #131c2b;
   border-radius: 10px;
-  padding: 13px 16px;
-  margin-bottom: 8px;
+  padding: 10px 16px;
+  margin-bottom: 6px;
   border: 1px solid rgba(255, 255, 255, 0.05);
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
 
-.pp-row:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.5);
-}
+.pp-col-user { flex: 1; min-width: 0; }
+.pp-col-pred { width: 140px; flex-shrink: 0; text-align: right; }
 
-/* Two columns */
-.pp-col-user {
-  flex: 1;
-  min-width: 0;
-}
-
-.pp-col-pred {
-  width: 160px;
-  flex-shrink: 0;
-  text-align: right;
-}
-
-/* Username — white like leaderboard */
 .pp-username {
-  font-size: 17px;
+  font-size: 16px;
   font-weight: 600;
   color: #e6edf3;
   white-space: nowrap;
@@ -838,31 +762,21 @@ button:hover {
   text-overflow: ellipsis;
 }
 
-/* Predicted team — colored per team */
 .pp-predicted {
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 800;
   letter-spacing: 0.04em;
 }
 
-/* Empty states */
 .pp-empty {
   text-align: center;
   color: #9da7b3;
   font-size: 15px;
-  padding: 30px 10px;
+  padding: 20px 10px;
   opacity: 0.8;
 }
 
-.pp-empty-row {
-  text-align: center;
-  color: #6b7a8d;
-  font-size: 14px;
-  padding: 16px;
-}
-
 /* ===== Add Match Form (Admin) ===== */
-
 .am-form {
   display: flex;
   flex-direction: column;
@@ -883,68 +797,16 @@ button:hover {
   letter-spacing: 0.08em;
 }
 
-.am-select,
-.am-datetime {
+.am-select, .am-datetime {
   width: 100%;
   padding: 12px 14px;
   border-radius: 10px;
   border: 1px solid rgba(255, 255, 255, 0.1);
   background: #0d1117;
   color: #e6edf3;
-  font-family: 'Josefin Sans', sans-serif;
+  font-family: inherit;
   font-size: 15px;
   font-weight: 600;
-  appearance: none;
-  -webkit-appearance: none;
-  cursor: pointer;
-  transition: border-color 0.2s ease;
-}
-
-.am-select {
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236b7a8d' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 14px center;
-  padding-right: 36px;
-}
-
-.am-select:focus,
-.am-datetime:focus {
-  outline: none;
-  border-color: #38bdf8;
-  box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.15);
-}
-
-.am-select option {
-  background: #161b22;
-  color: #e6edf3;
-  font-weight: 600;
-  padding: 8px;
-}
-
-.am-datetime::-webkit-calendar-picker-indicator {
-  filter: invert(0.7);
-  cursor: pointer;
-}
-
-.am-status-row {
-  flex-direction: row;
-  align-items: center;
-  justify-content: space-between;
-  padding: 12px 14px;
-  background: rgba(255, 255, 255, 0.03);
-  border-radius: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.06);
-}
-
-.am-status-badge {
-  font-size: 13px;
-  font-weight: 800;
-  color: #22c55e;
-  background: rgba(34, 197, 94, 0.12);
-  border: 1px solid rgba(34, 197, 94, 0.3);
-  padding: 4px 14px;
-  border-radius: 6px;
-  letter-spacing: 0.08em;
 }
 
 .am-submit-btn {
@@ -956,19 +818,5 @@ button:hover {
   color: #ffffff !important;
   font-size: 16px !important;
   font-weight: 800 !important;
-  letter-spacing: 0.06em;
-  cursor: pointer;
-  transition: all 0.2s ease !important;
   box-shadow: 0 4px 15px rgba(37, 99, 235, 0.4);
-  margin-top: 10px;
-}
-
-.am-submit-btn:hover {
-  transform: translateY(-2px) !important;
-  box-shadow: 0 6px 20px rgba(37, 99, 235, 0.6) !important;
-}
-
-.am-submit-btn:active {
-  transform: translateY(1px) !important;
-  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.4) !important;
 }

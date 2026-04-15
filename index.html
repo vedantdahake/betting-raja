@@ -196,8 +196,10 @@
       <h2>🗳️ Public Polls</h2>
       <p style="color: #9da7b3; font-size: 14px; margin-top: -15px; margin-bottom: 20px;">Predictions revealed after
         match time. 🏏</p>
-      <div id="public-polls-content">
-        Loading...
+      <div class="lb-scroll-wrapper"> <!-- Reusing lb-scroll-wrapper for consistency -->
+        <div id="public-polls-content">
+          Loading...
+        </div>
       </div>
     </div>
   </div>
@@ -576,7 +578,6 @@
       contentDiv.innerHTML = `<div style="text-align:center; color:#9da7b3; padding:20px;">Loading predictions...</div>`;
 
       try {
-        // Fetch all upcoming matches
         const { data: matches, error: mErr } = await supabaseClient
           .from("matches")
           .select("*")
@@ -585,7 +586,6 @@
         if (mErr) throw mErr;
 
         const now = new Date();
-        // Filter: only show matches whose match_date has passed
         const expiredMatches = (matches || []).filter(m => m.match_date && new Date(m.match_date) < now);
 
         if (expiredMatches.length === 0) {
@@ -596,7 +596,6 @@
         let html = '';
 
         for (const match of expiredMatches) {
-          // Fetch all predictions for this match along with user names
           const { data: predictions, error: pErr } = await supabaseClient
             .from("predictions")
             .select("predicted_winner, users(name)")
@@ -614,15 +613,15 @@
           html += `<span class="pp-team-dot" style="background:${colorB}"></span>`;
           html += `</div>`;
 
-          // Table header (leaderboard style)
-          html += `<div class="pp-header">`;
-          html += `<span class="pp-col-user">USER</span>`;
-          html += `<span class="pp-col-pred">PREDICTED</span>`;
-          html += `</div>`;
-
           if (!predictions || predictions.length === 0) {
-            html += `<div class="pp-empty-row">No predictions for this match.</div>`;
+            html += `<div class="pp-empty-row" style="text-align:center; color:#6b7a8d; font-size:14px; padding:10px;">No predictions submitted.</div>`;
           } else {
+            // Header for this match
+            html += `<div class="pp-header">`;
+            html += `<span class="pp-col-user">USER</span>`;
+            html += `<span class="pp-col-pred">PREDICTION</span>`;
+            html += `</div>`;
+
             predictions.forEach(p => {
               const userName = p.users?.name || 'Unknown';
               const predictedTeam = p.predicted_winner;
@@ -634,14 +633,13 @@
               html += `</div>`;
             });
           }
-
-          html += `</div>`; // close pp-match-card
+          html += `</div>`;
         }
 
         contentDiv.innerHTML = html;
       } catch (err) {
         console.error('Public polls error:', err);
-        contentDiv.innerHTML = `<div class="pp-empty">⚠️ Failed to load predictions. Please try again later.</div>`;
+        contentDiv.innerHTML = `<div class="pp-empty">⚠️ Failed to load predictions.</div>`;
       }
     }
 
