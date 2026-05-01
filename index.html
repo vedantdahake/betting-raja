@@ -58,6 +58,7 @@
             <div class="settings-dropdown" id="settings-dropdown">
               <button onclick="showPublicPolls()">Public Polls</button>
               <button id="add-match-menu-btn" onclick="showAddMatch()" style="display: none;">Add Match</button>
+              <button onclick="changeName()">Change Name</button>
               <button onclick="showAboutUs()">About Us</button>
               <button onclick="logout()">Logout</button>
             </div>
@@ -276,6 +277,19 @@
         title="Secret...">Creatives</span></span>
   </footer>
 
+  <!-- ===== Change Name Modal ===== -->
+  <div id="change-name-modal" class="modal-overlay" style="display: none;">
+    <div class="modal-card">
+      <h3>Update Username</h3>
+      <p style="color: #9da7b3; font-size: 14px; margin-bottom: 20px;">Choose a name that reflects your cricket gyaan. 😎</p>
+      <input type="text" id="new-username-input" placeholder="Enter new name" class="modal-input">
+      <div class="modal-buttons">
+        <button onclick="closeChangeNameModal()" class="modal-btn-cancel">Cancel</button>
+        <button onclick="saveNewName()" class="modal-btn-save">Save Changes</button>
+      </div>
+    </div>
+  </div>
+
 
 
 
@@ -453,6 +467,60 @@
       document.getElementById("public-polls-section").style.display = "none";
       document.getElementById("add-match-section").style.display = "none";
       document.getElementById("auth-section").style.display = "block";
+    }
+
+    async function changeName() {
+      const { data: sessionData } = await supabaseClient.auth.getSession();
+      if (!sessionData.session) return;
+      const user = sessionData.session.user;
+
+      const { data: userData, error: fetchError } = await supabaseClient
+        .from("users")
+        .select("name")
+        .eq("id", user.id)
+        .single();
+
+      if (fetchError) {
+        alert("Error fetching current name: " + fetchError.message);
+        return;
+      }
+
+      const modal = document.getElementById("change-name-modal");
+      const input = document.getElementById("new-username-input");
+      input.value = userData.name;
+      modal.style.display = "flex";
+      input.focus();
+    }
+
+    function closeChangeNameModal() {
+      document.getElementById("change-name-modal").style.display = "none";
+    }
+
+    async function saveNewName() {
+      const { data: sessionData } = await supabaseClient.auth.getSession();
+      if (!sessionData.session) return;
+      const user = sessionData.session.user;
+
+      const newName = document.getElementById("new-username-input").value;
+
+      if (!newName || newName.trim() === "") {
+        alert("Name cannot be empty");
+        return;
+      }
+
+      const { error: updateError } = await supabaseClient
+        .from("users")
+        .update({ name: newName.trim() })
+        .eq("id", user.id);
+
+      if (updateError) {
+        alert("Error updating name: " + updateError.message);
+      } else {
+        alert("Name changed successfully! 🚀");
+        document.getElementById("welcome").innerText = "Welcome, " + newName.trim();
+        loadLeaderboard();
+        closeChangeNameModal();
+      }
     }
 
     function toggleSettingsMenu() {
@@ -875,7 +943,7 @@
           .single();
 
         const matchTimePassed = match.match_date && new Date(match.match_date) < new Date();
-        const canPredict = !existing && !matchTimePassed;
+        const canPredict = !matchTimePassed;
 
         let timeStr = "TBD";
         if (match.match_date) {
@@ -897,7 +965,7 @@
 
         // Build Row Content based on state
         let rowHtml = "";
-        if (canPredict) {
+        if (!existing && !matchTimePassed) {
           rowHtml = `
             <button class="mc-btn" style="background:${colorA};" onclick="predict('${match.id}', '${match.team_a}')">PREDICT ${shortA}</button>
             <span class="mc-time">${timeStr}</span>
@@ -906,14 +974,37 @@
         } else if (existing) {
           const pickedTeam = existing.predicted_winner;
           const pickedColor = teamColor(pickedTeam);
-          rowHtml = `
-            <div class="mc-prediction-status">
-              <div class="mc-pick-indicator" style="background: ${pickedColor};">
-                YOUR PICK: ${teamShort(pickedTeam)}
+          
+          if (!matchTimePassed) {
+            const unpickedTeam = (pickedTeam === match.team_a) ? match.team_b : match.team_a;
+            const unpickedShort = teamShort(unpickedTeam);
+            
+            // YOUR PICK (Compact) + Quick Change Button
+            const unpickedColor = teamColor(unpickedTeam);
+            rowHtml = `
+              <div class="mc-prediction-status">
+                <div class="mc-pick-indicator mc-pick-indicator-compact" style="background: ${pickedColor};">
+                  PICK: ${teamShort(pickedTeam)}
+                </div>
+                <button class="mc-change-btn" 
+                        style="color: ${unpickedColor}; border-color: ${unpickedColor}4d; background: ${unpickedColor}1a;" 
+                        onclick="predict('${match.id}', '${unpickedTeam}')">
+                  Change (${unpickedShort})
+                </button>
+                <span class="mc-time-faded">${timeStr}</span>
               </div>
-              <span class="mc-time-faded">${timeStr}</span>
-            </div>
-          `;
+            `;
+          } else {
+            // Locked - already predicted
+            rowHtml = `
+              <div class="mc-prediction-status">
+                <div class="mc-pick-indicator" style="background: ${pickedColor};">
+                  YOUR PICK: ${teamShort(pickedTeam)}
+                </div>
+                <span class="mc-time-faded">${timeStr}</span>
+              </div>
+            `;
+          }
         } else {
           // Locked - no prediction
           rowHtml = `
@@ -968,32 +1059,35 @@
       const { data: sessionData } = await supabaseClient.auth.getSession();
       const user = sessionData.session.user;
 
-      const { data: existing } = await supabaseClient
-        .from("predictions")
-        .select("*")
-        .eq("user_id", user.id)
-        .eq("match_id", matchId)
+      // Check if match started (extra safety)
+      const { data: match } = await supabaseClient
+        .from("matches")
+        .select("match_date")
+        .eq("id", matchId)
         .single();
 
-      if (existing) {
-        alert("You already predicted this match!");
+      if (match && match.match_date && new Date(match.match_date) < new Date()) {
+        alert("Match has already started! Prediction locked.");
+        location.reload();
         return;
       }
+
       const confirmPredict = confirm(`Are you sure you want to predict ${team}?`);
       if (!confirmPredict) return;
 
-      const { error } = await supabaseClient.from("predictions").insert([
+      const { error } = await supabaseClient.from("predictions").upsert([
         {
           user_id: user.id,
           match_id: matchId,
           predicted_winner: team
         }
-      ]);
+      ], { onConflict: 'user_id,match_id' });
 
       if (error) {
-        alert("Something went wrong");
+        alert("Something went wrong: " + (error.message || JSON.stringify(error)));
       } else {
-        alert("Prediction submitted!");
+        alert("Prediction updated!");
+        loadMatches(user);
       }
     }
 
