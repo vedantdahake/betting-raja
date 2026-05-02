@@ -12,7 +12,7 @@
 
 
   <link rel="stylesheet" href="style.css">
-
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 
 <body>
@@ -57,10 +57,11 @@
             <button class="settings-btn" onclick="toggleSettingsMenu()">☰</button>
             <div class="settings-dropdown" id="settings-dropdown">
               <button onclick="showPublicPolls()">Public Polls</button>
+              <button onclick="showStreakSection()">Streaks</button>
+              <button onclick="showFameShame()">Fame / Shame</button>
               <button id="add-match-menu-btn" onclick="showAddMatch()" style="display: none;">Add Match</button>
               <button onclick="changeName()">Change Name</button>
               <button onclick="showAboutUs()">About Us</button>
-              <button onclick="logout()">Logout</button>
             </div>
           </div>
         </div>
@@ -85,14 +86,14 @@
         <h3>Your Points</h3>
         <p id="points"></p>
 
-        <div class="disclaimer-msg">
-          <p style="margin: 0 0 6px 0; color: #ef4444;">⚠️ <strong>Warning<br>Dear Sattorii</strong>,</p>
-          <p style="margin: 0 0 6px 0;">If you fail to submit your match prediction before the deadline <strong>(3:00 PM
-              / 7:00 PM)</strong>, a penalty of <strong style="color: #ef4444;">-1 point</strong> will be applied.</p>
-          <p style="margin: 0 0 6px 0;">This point will be <strong>equally distributed among users who submitted valid
-              predictions</strong>.</p>
-          <p style="margin: 0 0 6px 0;">No exceptions will be made. Predict on time to avoid penalty.</p>
-          <p style="margin: 0;"><strong>👻</strong></p>
+        <div class="form-guide-container">
+          <h3>Recent Form</h3>
+          <div id="user-form-guide" class="form-guide-list">
+            <span class="form-empty">No matches played yet.</span>
+          </div>
+          <div class="chart-wrapper">
+            <canvas id="performanceChart"></canvas>
+          </div>
         </div>
       </div>
 
@@ -205,6 +206,53 @@
     </div>
   </div>
 
+  <!-- ===== Streak Section ===== -->
+  <div id="streak-section" class="about-container" style="display: none;">
+    <div class="about-content">
+      <button class="back-btn" onclick="hideStreakSection()">← Back to Dashboard</button>
+      <h2>🔥 Streaks 💀</h2>
+      <p style="color: #9da7b3; font-size: 14px; margin-top: -15px; margin-bottom: 25px;">Users with 2 or more consecutive results.</p>
+      
+      <div class="streak-layout">
+        <div class="streak-column">
+          <h3 class="streak-title winning">🔥 Winning Streaks</h3>
+          <div id="winning-streaks-list">Loading...</div>
+        </div>
+        <div class="streak-column">
+          <h3 class="streak-title losing">💀 Losing Streaks</h3>
+          <div id="losing-streaks-list">Loading...</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== Fame/Shame Section ===== -->
+  <div id="fame-shame-section" class="about-container" style="display: none;">
+    <div class="about-content">
+      <button class="back-btn" onclick="hideFameShame()">← Back to Dashboard</button>
+      <h2>🏆 Fame / Shame 💀</h2>
+      <p style="color: #9da7b3; font-size: 14px; margin-top: -15px; margin-bottom: 25px;">All-time records and recent highlights.</p>
+      
+      <div class="fs-container">
+        <!-- Hall of Fame -->
+        <div class="fs-section">
+          <h3 class="fs-section-title fame">✨ Hall of Fame</h3>
+          <div id="fame-list">
+            <div class="fs-loading">Calculating legends...</div>
+          </div>
+        </div>
+
+        <!-- Hall of Shame -->
+        <div class="fs-section">
+          <h3 class="fs-section-title shame">🤡 Hall of Shame</h3>
+          <div id="shame-list">
+            <div class="fs-loading">Identifying clowns...</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- ===== Add Match Section (Admin Only) ===== -->
   <div id="add-match-section" class="about-container" style="display: none;">
     <div class="about-content">
@@ -286,6 +334,28 @@
       <div class="modal-buttons">
         <button onclick="closeChangeNameModal()" class="modal-btn-cancel">Cancel</button>
         <button onclick="saveNewName()" class="modal-btn-save">Save Changes</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== User Profile Modal ===== -->
+  <div id="user-profile-modal" class="modal-overlay" style="display: none;">
+    <div class="modal-card">
+      <h3 id="profile-name">User Profile</h3>
+      <p style="color: #9da7b3; font-size: 14px; margin-bottom: 20px;">Performance insights and recent form.</p>
+      
+      <div class="form-guide-container" style="background: rgba(0,0,0,0.2); border: none;">
+        <h3 style="font-size: 13px; text-align: left;">Recent Form</h3>
+        <div id="profile-form-guide" class="form-guide-list">
+          <span class="form-empty">Loading...</span>
+        </div>
+        <div class="chart-wrapper" style="height: 180px; margin-top: 15px;">
+          <canvas id="profilePerformanceChart"></canvas>
+        </div>
+      </div>
+
+      <div class="modal-buttons" style="margin-top: 20px;">
+        <button onclick="closeUserProfileModal()" class="modal-btn-cancel" style="width: 100%;">Close</button>
       </div>
     </div>
   </div>
@@ -426,7 +496,7 @@
         html += `
           <div class="${rowClass}">
             <span class="lb-col-rank lb-rank-num">${rankDisplay}</span>
-            <span class="lb-col-name lb-name">${user.name} ${youBadge}</span>
+            <span class="lb-col-name lb-name" onclick="showUserProfile('${user.id}', '${user.name}')" style="cursor: pointer;">${user.name} ${youBadge}</span>
             <span class="lb-col-pts lb-pts-val" style="color:${ptsColor}">${user.points.toLocaleString()}</span>
             <span class="lb-col-wins lb-wins-val">${user.wins}</span>
             <span class="lb-col-losses lb-losses-val">${user.losses}</span>
@@ -523,6 +593,110 @@
       }
     }
 
+    let profileChart = null;
+    async function showUserProfile(userId, userName) {
+      document.getElementById("profile-name").innerText = userName;
+      document.getElementById("profile-form-guide").innerHTML = "Loading...";
+      document.getElementById("user-profile-modal").style.display = "flex";
+
+      // 1. Load Form Guide
+      try {
+        const { data: form, error: formErr } = await supabaseClient
+          .from("user_outcomes")
+          .select("outcome")
+          .eq("user_id", userId)
+          .order("created_at", { ascending: false })
+          .limit(7);
+
+        const formContainer = document.getElementById("profile-form-guide");
+        if (formErr) {
+          formContainer.innerHTML = '<span class="form-empty">Error loading.</span>';
+        } else if (!form || form.length === 0) {
+          formContainer.innerHTML = '<span class="form-empty">No results yet. 🏏</span>';
+        } else {
+          const outcomes = [...form].reverse();
+          formContainer.innerHTML = outcomes.map(o => `
+            <span class="form-dot ${o.outcome === 'W' ? 'win' : 'loss'}">${o.outcome}</span>
+          `).join('');
+        }
+      } catch (err) {
+        console.error("Profile form error:", err);
+      }
+
+      // 2. Load Chart
+      try {
+        const { data: history, error: histErr } = await supabaseClient
+          .from("point_history")
+          .select("points, recorded_at")
+          .eq("user_id", userId)
+          .order("recorded_at", { ascending: false })
+          .limit(10);
+
+        const ctx = document.getElementById('profilePerformanceChart').getContext('2d');
+        if (profileChart) profileChart.destroy();
+
+        if (histErr || !history || history.length < 2) {
+          ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+          return;
+        }
+
+        const plotData = history.reverse();
+        const labels = plotData.map((_, i) => `M${i + 1}`);
+        const points = plotData.map(h => h.points);
+
+        profileChart = new Chart(ctx, {
+          type: 'line',
+          data: {
+            labels: labels,
+            datasets: [{
+              label: 'Points',
+              data: points,
+              borderColor: '#22c55e',
+              borderWidth: 3,
+              pointBackgroundColor: '#22c55e',
+              pointRadius: 4,
+              tension: 0.4,
+              fill: true,
+              backgroundColor: (context) => {
+                const chart = context.chart;
+                const {ctx, chartArea} = chart;
+                if (!chartArea) return null;
+                const gradient = ctx.createLinearGradient(0, chartArea.bottom, 0, chartArea.top);
+                gradient.addColorStop(0, 'rgba(34, 197, 94, 0)');
+                gradient.addColorStop(1, 'rgba(34, 197, 94, 0.2)');
+                return gradient;
+              },
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+              y: {
+                grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                ticks: { color: '#6b7a8d', font: { size: 10 } }
+              },
+              x: {
+                grid: { display: false },
+                ticks: { color: '#6b7a8d', font: { size: 10 } }
+              }
+            }
+          }
+        });
+      } catch (err) {
+        console.error("Profile chart error:", err);
+      }
+    }
+
+    function closeUserProfileModal() {
+      document.getElementById("user-profile-modal").style.display = "none";
+      if (profileChart) {
+        profileChart.destroy();
+        profileChart = null;
+      }
+    }
+
     function toggleSettingsMenu() {
       const dropdown = document.getElementById("settings-dropdown");
       dropdown.style.display = dropdown.style.display === "block" ? "none" : "block";
@@ -541,11 +715,19 @@
       }
     }
 
+    function hideAllSections() {
+      const sections = [
+        "dashboard", "live-score-section", "public-polls-section", 
+        "streak-section", "add-match-section", "about-section", "fame-shame-section"
+      ];
+      sections.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.style.display = "none";
+      });
+    }
+
     function showAboutUs() {
-      document.getElementById("dashboard").style.display = "none";
-      document.getElementById("live-score-section").style.display = "none";
-      document.getElementById("public-polls-section").style.display = "none";
-      document.getElementById("add-match-section").style.display = "none";
+      hideAllSections();
       document.getElementById("about-section").style.display = "block";
     }
 
@@ -581,6 +763,66 @@
     function hideAddMatch() {
       document.getElementById("add-match-section").style.display = "none";
       document.getElementById("dashboard").style.display = "block";
+    }
+
+    // ===== Streaks =====
+    function showStreakSection() {
+      document.getElementById("dashboard").style.display = "none";
+      document.getElementById("about-section").style.display = "none";
+      document.getElementById("live-score-section").style.display = "none";
+      document.getElementById("public-polls-section").style.display = "none";
+      document.getElementById("add-match-section").style.display = "none";
+      document.getElementById("streak-section").style.display = "block";
+      loadStreaks();
+    }
+
+    function hideStreakSection() {
+      document.getElementById("streak-section").style.display = "none";
+      document.getElementById("dashboard").style.display = "block";
+    }
+
+    async function loadStreaks() {
+      const winList = document.getElementById("winning-streaks-list");
+      const lossList = document.getElementById("losing-streaks-list");
+      
+      winList.innerHTML = "Loading...";
+      lossList.innerHTML = "Loading...";
+
+      try {
+        const { data, error } = await supabaseClient
+          .from("user_streaks")
+          .select("streak_type, streak_count, users(name)")
+          .gte("streak_count", 2)
+          .order("streak_count", { ascending: false });
+
+        if (error) throw error;
+
+        const winners = data.filter(s => s.streak_type === 'win');
+        const losers = data.filter(s => s.streak_type === 'loss');
+
+        winList.innerHTML = winners.length > 0 
+          ? winners.map(s => `
+            <div class="streak-card winning">
+              <span class="streak-name">${s.users.name}</span>
+              <span class="streak-count">🔥 ${s.streak_count}</span>
+            </div>
+          `).join('')
+          : '<div class="streak-empty">No winners yet... ❄️</div>';
+
+        lossList.innerHTML = losers.length > 0 
+          ? losers.map(s => `
+            <div class="streak-card losing">
+              <span class="streak-name">${s.users.name}</span>
+              <span class="streak-count">💀 ${s.streak_count}</span>
+            </div>
+          `).join('')
+          : '<div class="streak-empty">No major losers! 🎉</div>';
+
+      } catch (err) {
+        console.error("Streak load error:", err);
+        winList.innerHTML = '<div class="streak-empty">Error loading.</div>';
+        lossList.innerHTML = '<div class="streak-empty">Error loading.</div>';
+      }
     }
 
     async function submitNewMatch() {
@@ -839,6 +1081,24 @@
       }
     }
 
+    async function recordLogin(userId) {
+      try {
+        // 1. Update last_login in users table
+        await supabaseClient
+          .from("users")
+          .update({ last_login: new Date().toISOString() })
+          .eq("id", userId);
+
+        // 2. Insert into login_history
+        await supabaseClient
+          .from("login_history")
+          .insert([{ user_id: userId }]);
+          
+      } catch (err) {
+        console.error("Error recording login:", err);
+      }
+    }
+
     const ADMIN_EMAILS = ["vedantdahake346@gmail.com", "mnothing237@gmail.com"];
 
     async function showDashboard(user) {
@@ -873,7 +1133,127 @@
 
       loadMatches(user);
       loadLeaderboard();
+      updateUserStreak(user.id);
+      loadUserForm(user.id);
+      loadPerformanceChart(user.id);
+      recordLogin(user.id);
+    }
 
+    let perfChart = null;
+    async function loadPerformanceChart(userId) {
+      const ctx = document.getElementById('performanceChart').getContext('2d');
+      
+      try {
+        const { data, error } = await supabaseClient
+          .from("point_history")
+          .select("points, recorded_at")
+          .eq("user_id", userId)
+          .order("recorded_at", { ascending: false })
+          .limit(10);
+
+        if (error) throw error;
+        if (!data || data.length < 2) return;
+
+        const history = data.reverse();
+        const labels = history.map((_, index) => `M${index + 1}`);
+        const points = history.map(h => h.points);
+
+        if (perfChart) perfChart.destroy();
+
+        perfChart = new Chart(ctx, {
+          type: 'line',
+          data: {
+            labels: labels,
+            datasets: [{
+              label: 'Points',
+              data: points,
+              borderColor: '#22c55e',
+              borderWidth: 3,
+              pointBackgroundColor: '#22c55e',
+              pointRadius: 4,
+              tension: 0.4,
+              fill: true,
+              backgroundColor: (context) => {
+                const chart = context.chart;
+                const {ctx, chartArea} = chart;
+                if (!chartArea) return null;
+                const gradient = ctx.createLinearGradient(0, chartArea.bottom, 0, chartArea.top);
+                gradient.addColorStop(0, 'rgba(34, 197, 94, 0)');
+                gradient.addColorStop(1, 'rgba(34, 197, 94, 0.2)');
+                return gradient;
+              },
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+              y: {
+                grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                ticks: { color: '#6b7a8d', font: { size: 10 } }
+              },
+              x: {
+                grid: { display: false },
+                ticks: { color: '#6b7a8d', font: { size: 10 } }
+              }
+            }
+          }
+        });
+
+      } catch (err) {
+        console.error("Chart load error:", err);
+      }
+    }
+
+    async function loadUserForm(userId) {
+      const container = document.getElementById("user-form-guide");
+      
+      try {
+        const { data, error } = await supabaseClient
+          .from("user_outcomes")
+          .select("outcome")
+          .eq("user_id", userId)
+          .order("created_at", { ascending: false })
+          .limit(7);
+
+        if (error) throw error;
+
+        if (!data || data.length === 0) {
+          container.innerHTML = '<span class="form-empty">No results yet. 🏏</span>';
+          return;
+        }
+
+        // Reverse to show oldest to newest (left to right)
+        const outcomes = [...data].reverse();
+        
+        container.innerHTML = outcomes.map(o => `
+          <span class="form-dot ${o.outcome === 'W' ? 'win' : 'loss'}">${o.outcome}</span>
+        `).join('');
+
+      } catch (err) {
+        console.error("Form load error:", err);
+      }
+    }
+
+    async function updateUserStreak(userId) {
+      const { data, error } = await supabaseClient
+        .from("user_streaks")
+        .select("streak_type, streak_count")
+        .eq("user_id", userId)
+        .single();
+
+      const pointsContainer = document.getElementById("points");
+      const existingStreakSpan = document.getElementById("user-streak-badge");
+      if (existingStreakSpan) existingStreakSpan.remove();
+
+      if (data && data.streak_count >= 1) {
+        const streakSpan = document.createElement("span");
+        streakSpan.id = "user-streak-badge";
+        streakSpan.className = `streak-badge ${data.streak_type}`;
+        streakSpan.innerHTML = (data.streak_type === 'win' ? '🔥 ' : '💀 ') + data.streak_count;
+        pointsContainer.appendChild(streakSpan);
+      }
     }
     async function loadMatches(user) {
 
@@ -1088,6 +1468,192 @@
       } else {
         alert("Prediction updated!");
         loadMatches(user);
+      }
+    }
+
+    function showFameShame() {
+      hideAllSections();
+      document.getElementById("fame-shame-section").style.display = "block";
+      loadFameShame();
+    }
+
+    function hideFameShame() {
+      document.getElementById("fame-shame-section").style.display = "none";
+      document.getElementById("dashboard").style.display = "block";
+    }
+
+    async function loadFameShame() {
+      const fameList = document.getElementById("fame-list");
+      const shameList = document.getElementById("shame-list");
+
+      try {
+        // 1. Fetch Streaks (Invincible & Cursed)
+        const { data: streaks } = await supabaseClient
+          .from("user_streaks")
+          .select("user_id, max_win_streak, max_loss_streak, users(name)");
+
+        // Helper to get tied users for streaks
+        const getTiedStreaks = (list, key, minVal = 2) => {
+          if (!list || list.length === 0) return { names: '---', value: null };
+          const maxVal = Math.max(...list.map(s => s[key] || 0));
+          if (maxVal < minVal) return { names: '---', value: null };
+          const tied = list.filter(s => s[key] === maxVal);
+          return {
+            names: tied.map(s => s.users?.name || 'Unknown').join(', '),
+            value: maxVal
+          };
+        };
+
+        const invincible = getTiedStreaks(streaks, 'max_win_streak');
+        const cursed = getTiedStreaks(streaks, 'max_loss_streak');
+
+        // 2. Fetch Users (Oracle & Unpredictable)
+        const { data: users } = await supabaseClient
+          .from("users")
+          .select("id, name, wins, losses");
+
+        const usersWithStats = users.map(u => ({
+          ...u,
+          total: u.wins + u.losses,
+          winRate: (u.wins + u.losses) > 0 ? (u.wins / (u.wins + u.losses)) * 100 : 0
+        }));
+
+        const oracleCandidates = usersWithStats.filter(u => u.total >= 3);
+        const oracleBase = oracleCandidates.length > 0 ? oracleCandidates : usersWithStats;
+        
+        // Oracle (Best Win Rate)
+        const maxWR = Math.max(...oracleBase.map(u => u.winRate));
+        const oracleUsers = oracleBase.filter(u => u.winRate === maxWR);
+        const oracleNames = oracleUsers.map(u => u.name).join(', ') || '---';
+
+        // Unpredictable (Lowest Win Rate)
+        const minWR = Math.min(...oracleBase.map(u => u.winRate));
+        const unpredictableUsers = oracleBase.filter(u => u.winRate === minWR);
+        const unpredictableNames = unpredictableUsers.map(u => u.name).join(', ') || '---';
+
+        // 3. Point History Records (Weekly & All-Time High/Low)
+        const { data: history } = await supabaseClient
+          .from("point_history")
+          .select("user_id, points, recorded_at")
+          .order("recorded_at", { ascending: false });
+
+        // Virtual Benchmarks (Historical Records)
+        const BENCHMARK_HIGH = { value: 13.047, uid: 'e5002660-872a-4dc8-a3e0-ab1edfdce583' };
+        const BENCHMARK_LOW = { value: -13.049, uid: 'f405f40a-3d80-48fd-854b-4adf3416c4d8' };
+
+        // Fame: Highest Achievable Point (Peak Total)
+        const historyMax = history.length > 0 ? Math.max(...history.map(h => h.points)) : -Infinity;
+        const maxPeak = Math.max(BENCHMARK_HIGH.value, historyMax);
+        let peakNames = [];
+        if (maxPeak === BENCHMARK_HIGH.value) {
+          const benchUser = users.find(u => u.id === BENCHMARK_HIGH.uid);
+          if (benchUser) peakNames.push(benchUser.name);
+        }
+        const tiedMaxInHistory = [...new Set(history.filter(h => h.points === maxPeak).map(h => h.user_id))];
+        tiedMaxInHistory.forEach(uid => {
+          const name = users.find(u => u.id === uid)?.name;
+          if (name && !peakNames.includes(name)) peakNames.push(name);
+        });
+
+        // Shame: Lowest Achievable Point (Bottom Total)
+        const historyMin = history.length > 0 ? Math.min(...history.map(h => h.points)) : Infinity;
+        const minBottom = Math.min(BENCHMARK_LOW.value, historyMin);
+        let bottomNames = [];
+        if (minBottom === BENCHMARK_LOW.value) {
+          const benchUser = users.find(u => u.id === BENCHMARK_LOW.uid);
+          if (benchUser) bottomNames.push(benchUser.name);
+        }
+        const tiedMinInHistory = [...new Set(history.filter(h => h.points === minBottom).map(h => h.user_id))];
+        tiedMinInHistory.forEach(uid => {
+          const name = users.find(u => u.id === uid)?.name;
+          if (name && !bottomNames.includes(name)) bottomNames.push(name);
+        });
+
+        // Weekly Stats
+        const historyByUser = {};
+        history.forEach(h => {
+          if (!historyByUser[h.user_id]) historyByUser[h.user_id] = [];
+          historyByUser[h.user_id].push(h);
+        });
+
+        const weeklyStats = users.map(u => {
+          const userHistory = historyByUser[u.id] || [];
+          if (userHistory.length < 8) return { name: u.name, gain: null };
+          const sortedHist = [...userHistory].sort((a,b) => new Date(b.recorded_at) - new Date(a.recorded_at));
+          const gain = sortedHist[0].points - sortedHist[7].points;
+          return { name: u.name, gain };
+        });
+
+        const validWeekly = weeklyStats.filter(s => s.gain !== null);
+        
+        // Weekly Wizard
+        let wizardNames = '---', wizardVal = 'Locked (Min 7 Matches)';
+        if (validWeekly.length > 0) {
+          const maxWeeklyGain = Math.max(...validWeekly.map(s => s.gain));
+          const wizards = validWeekly.filter(s => s.gain === maxWeeklyGain);
+          wizardNames = wizards.map(w => w.name).join(', ');
+          wizardVal = '+' + maxWeeklyGain.toFixed(2) + ' pts';
+        }
+
+        // Weekly Joker
+        let jokerNames = '---', jokerVal = 'Locked (Min 7 Matches)';
+        if (validWeekly.length > 0) {
+          const minWeeklyGain = Math.min(...validWeekly.map(s => s.gain));
+          const jokers = validWeekly.filter(s => s.gain === minWeeklyGain);
+          jokerNames = jokers.map(j => j.name).join(', ');
+          jokerVal = minWeeklyGain.toFixed(2) + ' pts';
+        }
+
+        // RENDER FAME
+        fameList.innerHTML = `
+          <div class="fs-card fame">
+            <div class="fs-label">The Invincible (Max Win Streak)</div>
+            <div class="fs-user">${invincible.names}</div>
+            <div class="fs-value">${invincible.value ? invincible.value + ' Wins' : 'No record (Min 2)'}</div>
+          </div>
+          <div class="fs-card fame">
+            <div class="fs-label">Highest Achieved Point</div>
+            <div class="fs-user">${peakNames.join(', ') || '---'}</div>
+            <div class="fs-value">${maxPeak.toLocaleString()} pts (Peak)</div>
+          </div>
+          <div class="fs-card fame">
+            <div class="fs-label">The Oracle (Best Win Rate)</div>
+            <div class="fs-user">${oracleNames}</div>
+            <div class="fs-value">${maxWR.toFixed(1)}% Accuracy</div>
+          </div>
+          <div class="fs-card fame">
+            <div class="fs-label">Weekly Wizard (Last 7 Matches)</div>
+            <div class="fs-user">${wizardNames}</div>
+            <div class="fs-value">${wizardVal}</div>
+          </div>
+        `;
+
+        // RENDER SHAME
+        shameList.innerHTML = `
+          <div class="fs-card shame">
+            <div class="fs-label">The Cursed (Max Loss Streak)</div>
+            <div class="fs-user">${cursed.names}</div>
+            <div class="fs-value">${cursed.value ? cursed.value + ' Losses' : 'No record (Min 2)'}</div>
+          </div>
+          <div class="fs-card shame">
+            <div class="fs-label">Lowest Achieved Point</div>
+            <div class="fs-user">${bottomNames.join(', ') || '---'}</div>
+            <div class="fs-value">${minBottom.toLocaleString()} pts (Bottom)</div>
+          </div>
+          <div class="fs-card shame">
+            <div class="fs-label">The Unpredictable (Lowest Win Rate)</div>
+            <div class="fs-user">${unpredictableNames}</div>
+            <div class="fs-value">${minWR.toFixed(1)}% Accuracy</div>
+          </div>
+          <div class="fs-card shame">
+            <div class="fs-label">Weekly Joker (Last 7 Matches)</div>
+            <div class="fs-user">${jokerNames}</div>
+            <div class="fs-value">${jokerVal}</div>
+          </div>
+        `;
+
+      } catch (err) {
+        console.error("Fame/Shame error:", err);
       }
     }
 
