@@ -1364,10 +1364,10 @@
             rowHtml = `
               <div class="mc-prediction-status">
                 <div class="mc-pick-indicator mc-pick-indicator-compact" style="background: ${pickedColor};">
-                  PICK: ${teamShort(pickedTeam)}
+                  PICKED: ${teamShort(pickedTeam)}
                 </div>
                 <button class="mc-change-btn" 
-                        style="color: ${unpickedColor}; border-color: ${unpickedColor}4d; background: ${unpickedColor}1a;" 
+                        style="color: white; border-color: transparent; background: ${unpickedColor}cc; border-radius: 12px; font-size: 9px; white-space: nowrap;" 
                         onclick="predict('${match.id}', '${unpickedTeam}')">
                   Change (${unpickedShort})
                 </button>
@@ -1379,7 +1379,7 @@
             rowHtml = `
               <div class="mc-prediction-status">
                 <div class="mc-pick-indicator" style="background: ${pickedColor};">
-                  YOUR PICK: ${teamShort(pickedTeam)}
+                  PICKED: ${teamShort(pickedTeam)}
                 </div>
                 <span class="mc-time-faded">${timeStr}</span>
               </div>
