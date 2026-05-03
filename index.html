@@ -1363,7 +1363,7 @@
             const unpickedColor = teamColor(unpickedTeam);
             rowHtml = `
               <div class="mc-prediction-status">
-                <div class="mc-pick-indicator mc-pick-indicator-compact" style="background: ${pickedColor};">
+                <div class="mc-pick-indicator mc-pick-indicator-compact" style="background: ${pickedColor}; border: 2px solid #ffffff;">
                   PICKED: ${teamShort(pickedTeam)}
                 </div>
                 <button class="mc-change-btn" 
@@ -1378,7 +1378,7 @@
             // Locked - already predicted
             rowHtml = `
               <div class="mc-prediction-status">
-                <div class="mc-pick-indicator" style="background: ${pickedColor};">
+                <div class="mc-pick-indicator" style="background: ${pickedColor}; border: 2px solid #ffffff;">
                   PICKED: ${teamShort(pickedTeam)}
                 </div>
                 <span class="mc-time-faded">${timeStr}</span>
