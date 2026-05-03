@@ -1081,12 +1081,24 @@
       }
     }
 
-    async function recordLogin(userId) {
+    async function recordLogin(userId, lastLoginStr) {
       try {
+        const now = new Date();
+        
+        // If we have a previous login timestamp, check if 3 minutes have passed
+        if (lastLoginStr) {
+          const lastLogin = new Date(lastLoginStr);
+          const diffMinutes = (now - lastLogin) / (1000 * 60);
+          if (diffMinutes < 3) {
+            console.log("Login cooldown active. Skipping history entry.");
+            return;
+          }
+        }
+
         // 1. Update last_login in users table
         await supabaseClient
           .from("users")
-          .update({ last_login: new Date().toISOString() })
+          .update({ last_login: now.toISOString() })
           .eq("id", userId);
 
         // 2. Insert into login_history
@@ -1136,7 +1148,7 @@
       updateUserStreak(user.id);
       loadUserForm(user.id);
       loadPerformanceChart(user.id);
-      recordLogin(user.id);
+      recordLogin(user.id, data.last_login);
     }
 
     let perfChart = null;
@@ -1466,6 +1478,15 @@
       if (error) {
         alert("Something went wrong: " + (error.message || JSON.stringify(error)));
       } else {
+        // Also record in history
+        await supabaseClient.from("prediction_history").insert([
+          {
+            user_id: user.id,
+            match_id: matchId,
+            predicted_winner: team
+          }
+        ]);
+
         alert("Prediction updated!");
         loadMatches(user);
       }
