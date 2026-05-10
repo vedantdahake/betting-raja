@@ -17,6 +17,7 @@ body {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+  overflow-x: hidden; /* Prevents whole website horizontal scroll */
 }
 
 .header-bar {
@@ -100,6 +101,7 @@ h3 {
   height: 420px;
   display: flex;
   flex-direction: column;
+  min-width: 0; /* Prevents children from stretching the panel */
 }
 
 /* ===== Buttons ===== */
@@ -521,6 +523,8 @@ button:hover {
   padding: 30px;
   text-align: center;
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+  min-width: 0; /* Ensures children don't stretch the modal */
+  overflow-x: hidden;
 }
 
 .modal-card h3 {
@@ -1253,13 +1257,30 @@ button:hover {
 
 .chart-wrapper {
   margin-top: 20px;
-  height: 150px;
+  height: 180px;
   width: 100%;
+  max-width: 100%; /* Ensures it doesn't exceed parent width */
   position: relative;
   background: rgba(0, 0, 0, 0.2);
   border-radius: 8px;
   padding: 10px;
   border: 1px solid rgba(255, 255, 255, 0.03);
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+}
+
+.chart-wrapper::-webkit-scrollbar {
+  height: 4px;
+}
+
+.chart-wrapper::-webkit-scrollbar-thumb {
+  background: rgba(56, 189, 248, 0.3);
+  border-radius: 10px;
+}
+
+.chart-wrapper::-webkit-scrollbar-track {
+  background: transparent;
 }
 
 /* ===== Fame / Shame Section ===== */

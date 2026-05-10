@@ -629,8 +629,7 @@
           .from("point_history")
           .select("points, recorded_at")
           .eq("user_id", userId)
-          .order("recorded_at", { ascending: false })
-          .limit(10);
+          .order("recorded_at", { ascending: false });
 
         const ctx = document.getElementById('profilePerformanceChart').getContext('2d');
         if (profileChart) profileChart.destroy();
@@ -643,6 +642,14 @@
         const plotData = history.reverse();
         const labels = plotData.map((_, i) => `M${i + 1}`);
         const points = plotData.map(h => h.points);
+
+        // Adjust canvas width: show 10 points initially, then scroll.
+        const containerWidth = ctx.canvas.parentElement.clientWidth;
+        const availableWidth = containerWidth - 20; // accounting for 10px padding
+        const pointWidth = Math.max(45, availableWidth / 10);
+        const requiredWidth = Math.max(containerWidth, labels.length * pointWidth);
+        ctx.canvas.style.width = requiredWidth + 'px';
+        ctx.canvas.style.height = '160px';
 
         profileChart = new Chart(ctx, {
           type: 'line',
@@ -1160,8 +1167,7 @@
           .from("point_history")
           .select("points, recorded_at")
           .eq("user_id", userId)
-          .order("recorded_at", { ascending: false })
-          .limit(10);
+          .order("recorded_at", { ascending: false });
 
         if (error) throw error;
         if (!data || data.length < 2) return;
@@ -1169,6 +1175,14 @@
         const history = data.reverse();
         const labels = history.map((_, index) => `M${index + 1}`);
         const points = history.map(h => h.points);
+
+        // Adjust canvas width: show 10 points initially, then scroll.
+        const containerWidth = ctx.canvas.parentElement.clientWidth;
+        const availableWidth = containerWidth - 20; // accounting for 10px padding
+        const pointWidth = Math.max(45, availableWidth / 10);
+        const requiredWidth = Math.max(containerWidth, labels.length * pointWidth);
+        ctx.canvas.style.width = requiredWidth + 'px';
+        ctx.canvas.style.height = '160px'; // Match style.css wrapper height minus padding
 
         if (perfChart) perfChart.destroy();
 
