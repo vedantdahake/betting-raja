@@ -1763,23 +1763,23 @@
         }
       };
 
-      if (file.size > 1024 * 1024) { // over 1MB, compress it
-        const img = new Image();
-        img.src = URL.createObjectURL(file);
-        img.onload = () => {
-          const canvas = document.createElement("canvas");
-          const ctx = canvas.getContext("2d");
-          const scale = Math.min(1000 / img.width, 1000 / img.height, 1);
-          canvas.width = img.width * scale;
-          canvas.height = img.height * scale;
-          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-          const compressedBase64 = canvas.toDataURL("image/jpeg", 0.8);
-          insertNotice(compressedBase64);
-        };
-      } else {
-        reader.onload = (event) => insertNotice(event.target.result);
-        reader.readAsDataURL(file);
-      }
+      const img = new Image();
+      img.src = URL.createObjectURL(file);
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        const ctx = canvas.getContext("2d");
+        
+        // Max dimension 800px for even faster loading
+        const scale = Math.min(800 / img.width, 800 / img.height, 1);
+        canvas.width = img.width * scale;
+        canvas.height = img.height * scale;
+        
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        
+        // Compress as JPEG at 70% quality to save space
+        const compressedBase64 = canvas.toDataURL("image/jpeg", 0.7);
+        insertNotice(compressedBase64);
+      };
     }
 
     async function loadAndShowNotice() {
