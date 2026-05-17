@@ -60,6 +60,7 @@
               <button onclick="showStreakSection()">Streaks</button>
               <button onclick="showFameShame()">Fame / Shame</button>
               <button id="add-match-menu-btn" onclick="showAddMatch()" style="display: none;">Add Match</button>
+              <button id="upload-notice-menu-btn" onclick="showUploadNotice()" style="display: none;">Upload Notice</button>
               <button onclick="changeName()">Change Name</button>
               <button onclick="showAboutUs()">About Us</button>
             </div>
@@ -324,6 +325,27 @@
         title="Secret...">Mind</span> <span onclick="showSecret('GMC.jpg')" style="cursor: pointer;"
         title="Secret...">Creatives</span></span>
   </footer>
+
+  <!-- ===== Notice Display Modal ===== -->
+  <div id="notice-display-modal" class="modal-overlay" style="display: none; z-index: 10000; justify-content: center; align-items: center; background: rgba(0,0,0,0.85);">
+    <div style="position: relative; max-width: 90%; max-height: 90%;">
+      <button onclick="closeNoticeDisplay()" style="position: absolute; top: -15px; right: -15px; background: #ef4444; color: white; border: none; border-radius: 50%; width: 30px; height: 30px; font-weight: bold; cursor: pointer; z-index: 10001; display: flex; justify-content: center; align-items: center; font-size: 18px;">×</button>
+      <img id="notice-image" src="" style="max-width: 100%; max-height: 80vh; border-radius: 12px; box-shadow: 0 0 40px rgba(255,255,255,0.2);">
+    </div>
+  </div>
+
+  <!-- ===== Upload Notice Modal ===== -->
+  <div id="upload-notice-modal" class="modal-overlay" style="display: none;">
+    <div class="modal-card">
+      <h3>Upload Notice Image</h3>
+      <p style="color: #9da7b3; font-size: 14px; margin-bottom: 20px;">Upload an image to show to all users on load.</p>
+      <input type="file" id="notice-file-input" accept="image/*" class="modal-input" style="padding: 10px; background: #2d3748; color: #fff;">
+      <div class="modal-buttons" style="margin-top: 20px;">
+        <button onclick="closeUploadNotice()" class="modal-btn-cancel">Cancel</button>
+        <button onclick="uploadNewNotice()" class="modal-btn-save">Upload</button>
+      </div>
+    </div>
+  </div>
 
   <!-- ===== Change Name Modal ===== -->
   <div id="change-name-modal" class="modal-overlay" style="display: none;">
@@ -1149,6 +1171,11 @@
       if (ADMIN_EMAILS.includes(user.email)) {
         document.getElementById("add-match-menu-btn").style.display = "block";
       }
+      
+      // Restrict upload notice to specific email
+      if (user.email === "vedantdahake346@gmail.com") {
+        document.getElementById("upload-notice-menu-btn").style.display = "block";
+      }
 
       loadMatches(user);
       loadLeaderboard();
@@ -1156,6 +1183,7 @@
       loadUserForm(user.id);
       loadPerformanceChart(user.id);
       recordLogin(user.id, data.last_login);
+      loadAndShowNotice();
     }
 
     let perfChart = null;
@@ -1691,6 +1719,87 @@
         console.error("Fame/Shame error:", err);
       }
     }
+
+    // ===== App Notices =====
+    function showUploadNotice() {
+      document.getElementById("upload-notice-modal").style.display = "flex";
+      toggleSettingsMenu();
+    }
+
+    function closeUploadNotice() {
+      document.getElementById("upload-notice-modal").style.display = "none";
+      document.getElementById("notice-file-input").value = "";
+    }
+
+    async function uploadNewNotice() {
+      const fileInput = document.getElementById("notice-file-input");
+      if (!fileInput.files || fileInput.files.length === 0) {
+        alert("Please select an image first.");
+        return;
+      }
+      const file = fileInput.files[0];
+      const reader = new FileReader();
+      
+      const insertNotice = async (base64String) => {
+        const { data: sessionData } = await supabaseClient.auth.getSession();
+        if (!sessionData.session || sessionData.session.user.email !== "vedantdahake346@gmail.com") {
+          alert("Unauthorized access.");
+          return;
+        }
+        
+        await supabaseClient.from("app_notices").update({ is_active: false }).eq("is_active", true);
+        const { error } = await supabaseClient.from("app_notices").insert([{
+          image_base64: base64String,
+          is_active: true,
+          created_by: sessionData.session.user.id
+        }]);
+        
+        if (error) {
+          alert("Error uploading notice: " + error.message);
+        } else {
+          alert("Notice uploaded successfully!");
+          closeUploadNotice();
+          loadAndShowNotice();
+        }
+      };
+
+      if (file.size > 1024 * 1024) { // over 1MB, compress it
+        const img = new Image();
+        img.src = URL.createObjectURL(file);
+        img.onload = () => {
+          const canvas = document.createElement("canvas");
+          const ctx = canvas.getContext("2d");
+          const scale = Math.min(1000 / img.width, 1000 / img.height, 1);
+          canvas.width = img.width * scale;
+          canvas.height = img.height * scale;
+          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+          const compressedBase64 = canvas.toDataURL("image/jpeg", 0.8);
+          insertNotice(compressedBase64);
+        };
+      } else {
+        reader.onload = (event) => insertNotice(event.target.result);
+        reader.readAsDataURL(file);
+      }
+    }
+
+    async function loadAndShowNotice() {
+      const { data, error } = await supabaseClient
+        .from("app_notices")
+        .select("image_base64")
+        .eq("is_active", true)
+        .order("created_at", { ascending: false })
+        .limit(1);
+        
+      if (!error && data && data.length > 0) {
+        document.getElementById("notice-image").src = data[0].image_base64;
+        document.getElementById("notice-display-modal").style.display = "flex";
+      }
+    }
+
+    function closeNoticeDisplay() {
+      document.getElementById("notice-display-modal").style.display = "none";
+    }
+
 
   </script>
 </body>
