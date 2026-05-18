@@ -694,12 +694,14 @@ button:hover {
 
 #matches::-webkit-scrollbar,
 #leaderboard::-webkit-scrollbar,
+#feedx-content::-webkit-scrollbar,
 .disclaimer-msg::-webkit-scrollbar {
   width: 6px;
 }
 
 #matches::-webkit-scrollbar-thumb,
-#leaderboard::-webkit-scrollbar-thumb {
+#leaderboard::-webkit-scrollbar-thumb,
+#feedx-content::-webkit-scrollbar-thumb {
   background: #334155;
   border-radius: 10px;
 }
