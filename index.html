@@ -1049,6 +1049,8 @@
 
     async function showFeedX() {
       document.getElementById("feedx-modal").style.display = "flex";
+      document.body.style.overflow = "hidden";
+      document.body.style.overscrollBehavior = "none";
       const contentDiv = document.getElementById("feedx-content");
       contentDiv.innerHTML = '<div style="text-align:center; color:#9da7b3; padding:20px;">Loading posts...</div>';
       
@@ -1088,6 +1090,8 @@
     
     function closeFeedX() {
       document.getElementById("feedx-modal").style.display = "none";
+      document.body.style.overflow = "";
+      document.body.style.overscrollBehavior = "";
     }
 
     async function createUserIfNotExists(user) {
