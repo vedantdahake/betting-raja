@@ -845,8 +845,8 @@ button:hover {
   display: inline-block;
 }
 
-/* ===== Live Score Button ===== */
-.live-score-btn {
+/* ===== FeedX Button ===== */
+.feedx-btn {
   background: linear-gradient(135deg, #f43f5e, #e11d48) !important;
   color: white !important;
   border: none !important;
