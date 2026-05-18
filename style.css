@@ -694,14 +694,12 @@ button:hover {
 
 #matches::-webkit-scrollbar,
 #leaderboard::-webkit-scrollbar,
-#feedx-content::-webkit-scrollbar,
 .disclaimer-msg::-webkit-scrollbar {
   width: 6px;
 }
 
 #matches::-webkit-scrollbar-thumb,
-#leaderboard::-webkit-scrollbar-thumb,
-#feedx-content::-webkit-scrollbar-thumb {
+#leaderboard::-webkit-scrollbar-thumb {
   background: #334155;
   border-radius: 10px;
 }
@@ -709,6 +707,23 @@ button:hover {
 .disclaimer-msg::-webkit-scrollbar-thumb {
   background: rgba(239, 68, 68, 0.3);
   border-radius: 10px;
+}
+
+/* ===== FeedX Scrollbar (Wider & Interactive) ===== */
+#feedx-content::-webkit-scrollbar {
+  width: 10px;
+}
+#feedx-content::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 10px;
+}
+#feedx-content::-webkit-scrollbar-thumb {
+  background: #475569;
+  border-radius: 10px;
+  border: 2px solid #161b22; /* Creates a nice padding effect */
+}
+#feedx-content::-webkit-scrollbar-thumb:hover {
+  background: #64748b;
 }
 
 /* ===== AUTH CENTER LAYOUT ===== */
