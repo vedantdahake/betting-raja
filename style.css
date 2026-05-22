@@ -2663,7 +2663,9 @@ button:hover {
   .an-pop-header { gap: 6px; }
   .an-pop-label { font-size: 10px; }
   
-  .an-versus-scoreboard { padding: 12px 10px; gap: 6px; }
+  .an-versus-scoreboard { padding: 12px 6px; gap: 4px; flex-wrap: nowrap; justify-content: space-between; }
+  .an-versus-player { min-width: 0; flex: 1; gap: 2px; }
+  .an-versus-center { min-width: 0; flex: 1.2; }
   .an-versus-score { font-size: 28px; }
   .an-versus-name { font-size: 12px; }
   .an-versus-verdict { font-size: 13px; }
