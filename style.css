@@ -829,27 +829,27 @@ button:hover {
 }
 
 /* Slide animations */
-@keyframes feedxSlideOutUp {
-  from { opacity: 1; transform: translateY(0);    }
-  to   { opacity: 0; transform: translateY(-60px);}
+@keyframes feedxSlideOutLeft {
+  from { opacity: 1; transform: translateX(0);     }
+  to   { opacity: 0; transform: translateX(-70px); }
 }
-@keyframes feedxSlideOutDown {
-  from { opacity: 1; transform: translateY(0);   }
-  to   { opacity: 0; transform: translateY(60px);}
+@keyframes feedxSlideOutRight {
+  from { opacity: 1; transform: translateX(0);    }
+  to   { opacity: 0; transform: translateX(70px); }
 }
-@keyframes feedxSlideInDown {
-  from { opacity: 0; transform: translateY(-60px); }
-  to   { opacity: 1; transform: translateY(0);     }
+@keyframes feedxSlideInRight {
+  from { opacity: 0; transform: translateX(70px); }
+  to   { opacity: 1; transform: translateX(0);    }
 }
-@keyframes feedxSlideInUp {
-  from { opacity: 0; transform: translateY(60px); }
-  to   { opacity: 1; transform: translateY(0);    }
+@keyframes feedxSlideInLeft {
+  from { opacity: 0; transform: translateX(-70px); }
+  to   { opacity: 1; transform: translateX(0);     }
 }
 
-.feedx-slide-out-up   { animation: feedxSlideOutUp   0.22s ease forwards; }
-.feedx-slide-out-down { animation: feedxSlideOutDown 0.22s ease forwards; }
-.feedx-slide-in-down  { animation: feedxSlideInDown  0.32s cubic-bezier(0.34,1.56,0.64,1) forwards; }
-.feedx-slide-in-up    { animation: feedxSlideInUp    0.32s cubic-bezier(0.34,1.56,0.64,1) forwards; }
+.feedx-slide-out-left  { animation: feedxSlideOutLeft  0.22s ease forwards; }
+.feedx-slide-out-right { animation: feedxSlideOutRight 0.22s ease forwards; }
+.feedx-slide-in-right  { animation: feedxSlideInRight  0.32s cubic-bezier(0.34,1.56,0.64,1) forwards; }
+.feedx-slide-in-left   { animation: feedxSlideInLeft   0.32s cubic-bezier(0.34,1.56,0.64,1) forwards; }
 
 /* Individual post card */
 .feedx-post-card {
@@ -906,7 +906,8 @@ button:hover {
 /* Nav arrow buttons */
 .feedx-nav-btn {
   position: fixed;
-  right: 18px;
+  top: 50%;
+  transform: translateY(-50%);
   width: 48px;
   height: 48px;
   border-radius: 50% !important;
@@ -927,11 +928,11 @@ button:hover {
 .feedx-nav-btn:hover {
   background: rgba(244, 63, 94, 0.35) !important;
   border-color: #f43f5e !important;
-  transform: scale(1.1) !important;
+  transform: translateY(-50%) scale(1.1) !important;
 }
 
-.feedx-nav-prev { bottom: 90px; }
-.feedx-nav-next { bottom: 32px; }
+.feedx-nav-prev { left: 14px; }
+.feedx-nav-next { right: 14px; }
 
 /* Swipe hint */
 .feedx-hint {
@@ -984,14 +985,13 @@ button:hover {
 /* Mobile tweaks */
 @media (max-width: 480px) {
   .feedx-nav-btn {
-    right: 12px;
-    width: 42px;
-    height: 42px;
-    font-size: 22px !important;
+    width: 40px;
+    height: 40px;
+    font-size: 20px !important;
   }
-  .feedx-nav-prev { bottom: 80px; }
-  .feedx-nav-next { bottom: 28px; }
-  .feedx-viewport { padding-bottom: 80px; }
+  .feedx-nav-prev { left: 8px; }
+  .feedx-nav-next { right: 8px; }
+  .feedx-viewport { padding: 8px 60px 20px; }
 }
 
 /* ===== AUTH CENTER LAYOUT ===== */
