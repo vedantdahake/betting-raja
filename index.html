@@ -259,7 +259,6 @@
         <button class="an-tab active" id="an-tab-h2h"        onclick="anSwitchTab('h2h')">⚔️ H2H</button>
         <button class="an-tab"        id="an-tab-teams"      onclick="anSwitchTab('teams')">🏆 Teams</button>
         <button class="an-tab"        id="an-tab-crowd"      onclick="anSwitchTab('crowd')">🎯 Crowd</button>
-        <button class="an-tab"        id="an-tab-users"      onclick="anSwitchTab('users')">👥 Users</button>
         <button class="an-tab"        id="an-tab-popularity" onclick="anSwitchTab('popularity')">🌟 Popularity</button>
         <button class="an-tab"        id="an-tab-versus"     onclick="anSwitchTab('versus')">🆚 1v1</button>
       </div>
@@ -291,12 +290,6 @@
         <div id="an-crowd-content"><div class="an-loading">Loading…</div></div>
       </div>
 
-      <div id="an-panel-users" class="an-panel" style="display:none;">
-        <h3 class="an-panel-title">👥 User Insights</h3>
-        <p class="an-panel-sub">Top predictors by accuracy, points race over time, and team-preference stats.</p>
-        <div id="an-users-content"><div class="an-loading">Loading…</div></div>
-        <div class="an-chart-wrap" style="margin-top:20px;"><canvas id="an-points-race-chart"></canvas></div>
-      </div>
 
       <div id="an-panel-popularity" class="an-panel" style="display:none;">
         <h3 class="an-panel-title">🌟 Team Popularity vs Win Rate</h3>
@@ -2148,7 +2141,7 @@
 
     function anSwitchTab(tab) {
       // Hide all panels
-      ['h2h','teams','crowd','users','popularity','versus'].forEach(t => {
+      ['h2h','teams','crowd','popularity','versus'].forEach(t => {
         document.getElementById(`an-panel-${t}`).style.display = 'none';
         document.getElementById(`an-tab-${t}`).classList.remove('active');
       });
@@ -2159,7 +2152,6 @@
         anLoadedTabs.add(tab);
         if (tab === 'teams')      loadAnTeams();
         if (tab === 'crowd')      loadAnCrowd();
-        if (tab === 'users')      loadAnUsers();
         if (tab === 'popularity') loadAnPopularity();
         if (tab === 'versus')     populateVersusDropdowns();
       }
@@ -2434,91 +2426,7 @@
       }
     }
 
-    // ============================================================
-    // TAB 4: USER INSIGHTS
-    // ============================================================
-    async function loadAnUsers() {
-      const el = document.getElementById('an-users-content');
-      el.innerHTML = '<div class="an-loading">Loading…</div>';
-      try {
-        const [{ data: users, error: uErr }, { data: history, error: hErr }] = await Promise.all([
-          supabaseClient.from('users').select('id, name, wins, losses, points').order('wins',{ascending:false}),
-          supabaseClient.from('point_history').select('user_id, points, recorded_at').order('recorded_at',{ascending:true})
-        ]);
-        if (uErr) throw uErr;
-        if (hErr) throw hErr;
 
-        // Top predictors by win rate
-        const ranked = (users || []).map(u => ({
-          ...u,
-          total: u.wins + u.losses,
-          wr: (u.wins + u.losses) > 0 ? (u.wins / (u.wins + u.losses) * 100) : 0
-        })).filter(u => u.total > 0).sort((a,b) => b.wr - a.wr);
-
-        let html = '<div class="an-section-title">🎯 Top Predictors by Accuracy</div>';
-        html += '<div class="an-user-table">';
-        html += '<div class="an-user-header"><span>Rank</span><span>Player</span><span>Win Rate</span><span>Record</span><span>Points</span></div>';
-        ranked.forEach((u, i) => {
-          const wrc = u.wr >= 60 ? '#22c55e' : u.wr >= 40 ? '#f59e0b' : '#ef4444';
-          const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `${i+1}`;
-          html += `
-            <div class="an-user-row">
-              <span class="an-user-rank">${medal}</span>
-              <span class="an-user-name">${u.name}</span>
-              <span class="an-user-wr" style="color:${wrc}">${u.wr.toFixed(1)}%</span>
-              <span class="an-user-rec">${u.wins}W-${u.losses}L</span>
-              <span class="an-user-pts" style="color:${u.points>=0?'#22c55e':'#ef4444'}">${u.points>0?'+':''}${u.points}</span>
-            </div>
-          `;
-        });
-        html += '</div>';
-        el.innerHTML = html;
-
-        // Points race chart
-        if ((history || []).length > 0) {
-          const userMap = {};
-          (users || []).forEach(u => { userMap[u.id] = u.name; });
-
-          const byUser = {};
-          history.forEach(h => {
-            if (!byUser[h.user_id]) byUser[h.user_id] = [];
-            byUser[h.user_id].push({ x: h.recorded_at, y: h.points });
-          });
-
-          const palette = ['#22c55e','#38bdf8','#f59e0b','#f43f5e','#a78bfa','#34d399','#fb923c','#60a5fa','#e879f9','#fbbf24'];
-          const datasets = Object.entries(byUser).slice(0,8).map(([uid, pts], i) => ({
-            label: userMap[uid] || 'User',
-            data: pts.map((p,j) => ({ x: `M${j+1}`, y: p.y })),
-            borderColor: palette[i % palette.length],
-            backgroundColor: 'transparent',
-            borderWidth: 2,
-            pointRadius: 3,
-            tension: 0.4
-          }));
-
-          const allLabels = [...new Set(history.map((_,i)=> `M${i+1}`))].slice(0,50);
-
-          const ctx = document.getElementById('an-points-race-chart').getContext('2d');
-          if (anRaceChart) anRaceChart.destroy();
-          anRaceChart = new Chart(ctx, {
-            type: 'line',
-            data: { datasets },
-            options: {
-              responsive: true, maintainAspectRatio: false,
-              plugins: { legend: { labels: { color:'#9da7b3', font:{size:11}, boxWidth:12 } } },
-              scales: {
-                x: { ticks:{color:'#9da7b3',maxTicksLimit:10}, grid:{display:false} },
-                y: { ticks:{color:'#9da7b3'}, grid:{color:'rgba(255,255,255,0.05)'} }
-              }
-            }
-          });
-        }
-
-      } catch(err) {
-        console.error('Users analytics error:', err);
-        el.innerHTML = '<div class="an-empty" style="color:#ef4444">Failed to load. ⚠️</div>';
-      }
-    }
 
     // ============================================================
     // TAB: TEAM POPULARITY VS WIN RATE

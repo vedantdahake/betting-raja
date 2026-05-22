@@ -1932,6 +1932,7 @@ button:hover {
 .an-h2h-selectors {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 10px;
   flex-wrap: wrap;
   margin-bottom: 20px;
@@ -2457,6 +2458,9 @@ button:hover {
   .an-h2h-scoreboard { flex-direction: column; gap: 8px; }
   .an-h2h-wins { font-size: 28px; }
   .an-team-record, .an-user-rec { display: none; }
+  .an-crowd-summary { flex-wrap: wrap; gap: 12px; }
+  .an-sum-stat { flex: 1 1 40%; text-align: center; }
+  .an-sum-lbl { text-align: center; line-height: 1.2; word-wrap: break-word; }
   .an-crowd-pct { min-width: 70px; font-size: 10px; }
   .an-act-name { flex: 0 0 80px; }
   
@@ -2598,6 +2602,7 @@ button:hover {
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.07em;
+  text-align: center;
 }
 
 .an-versus-table {
