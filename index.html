@@ -327,17 +327,31 @@
     </div>
   </div>
 
-  <!-- ===== FeedX Modal ===== -->
-  <div id="feedx-modal" class="modal-overlay" style="display: none; z-index: 9999; overscroll-behavior-y: none;">
-    <div class="modal-card" style="max-width: 500px; width: 95%; max-height: 85vh; display: flex; flex-direction: column; padding: 20px;">
-      <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 15px; margin-bottom: 15px;">
-        <h3 style="margin: 0; color: #f43f5e;">FeedX 📰</h3>
-        <button onclick="closeFeedX()" style="background: transparent; border: none; color: #9da7b3; font-size: 24px; cursor: pointer;">×</button>
-      </div>
-      <div id="feedx-content" style="flex: 1; overflow-y: auto; padding-right: 5px; overscroll-behavior-y: contain;">
-        Loading posts...
+  <!-- ===== FeedX Modal (Swipe Viewer) ===== -->
+  <div id="feedx-modal" class="feedx-fullscreen" style="display: none;">
+    <!-- Top Bar -->
+    <div class="feedx-topbar">
+      <span class="feedx-title">FeedX 📰</span>
+      <span id="feedx-counter" class="feedx-counter"></span>
+      <button onclick="closeFeedX()" class="feedx-close-btn">✕</button>
+    </div>
+
+    <!-- Progress Dots -->
+    <div id="feedx-dots" class="feedx-dots"></div>
+
+    <!-- Post Viewport -->
+    <div id="feedx-viewport" class="feedx-viewport">
+      <div id="feedx-slide" class="feedx-slide">
+        <!-- Post content injected here -->
       </div>
     </div>
+
+    <!-- Nav Arrows -->
+    <button id="feedx-prev" class="feedx-nav-btn feedx-nav-prev" onclick="feedxNavigate(-1)">&#8679;</button>
+    <button id="feedx-next" class="feedx-nav-btn feedx-nav-next" onclick="feedxNavigate(1)">&#8681;</button>
+
+    <!-- Swipe hint -->
+    <div id="feedx-hint" class="feedx-hint">Swipe up/down to browse posts</div>
   </div>
 
   <!-- ===== Upload Notice Modal ===== -->
@@ -1047,53 +1061,178 @@
       document.getElementById("new-post-modal").style.display = "none";
     }
 
+    // ===== FeedX Swipe Viewer =====
+    let feedxPosts = [];
+    let feedxIndex = 0;
+    let feedxTouchStartY = 0;
+    let feedxTouchStartX = 0;
+    let feedxAnimating = false;
+
     async function showFeedX() {
-      document.getElementById("feedx-modal").style.display = "flex";
-      document.documentElement.style.overscrollBehavior = "none";
+      const modal = document.getElementById("feedx-modal");
+      modal.style.display = "flex";
       document.body.style.overflow = "hidden";
-      document.body.style.overscrollBehavior = "none";
-      const contentDiv = document.getElementById("feedx-content");
-      contentDiv.innerHTML = '<div style="text-align:center; color:#9da7b3; padding:20px;">Loading posts...</div>';
-      
+
+      // Show loading state
+      document.getElementById("feedx-slide").innerHTML =
+        '<div class="feedx-loading"><div class="feedx-spinner"></div><p>Loading posts…</p></div>';
+      document.getElementById("feedx-dots").innerHTML = '';
+      document.getElementById("feedx-counter").textContent = '';
+
       try {
         const { data, error } = await supabaseClient
           .from("app_notices")
           .select("image_base64, created_at")
           .order("created_at", { ascending: false });
-          
+
         if (error) throw error;
-        
+
         if (!data || data.length === 0) {
-          contentDiv.innerHTML = '<div style="text-align:center; color:#9da7b3; padding:20px;">No posts yet. 📭</div>';
+          document.getElementById("feedx-slide").innerHTML =
+            '<div class="feedx-empty">No posts yet. 📭</div>';
           return;
         }
-        
-        let html = '';
-        data.forEach(post => {
-          const dateStr = new Date(post.created_at).toLocaleString();
-          html += `
-            <div style="background: rgba(255,255,255,0.03); border-radius: 12px; margin-bottom: 20px; border: 1px solid rgba(255,255,255,0.06); overflow: hidden;">
-              <div style="padding: 10px 15px; border-bottom: 1px solid rgba(255,255,255,0.06); font-size: 12px; color: #9da7b3; display: flex; justify-content: space-between; align-items: center;">
-                <span>FeedX Update</span>
-                <span>${dateStr}</span>
-              </div>
-              <img src="${post.image_base64}" style="width: 100%; display: block;">
-            </div>
-          `;
-        });
-        
-        contentDiv.innerHTML = html;
+
+        feedxPosts = data;
+        feedxIndex = 0;
+        feedxRenderPost(0, 'none');
+        feedxBuildDots();
+        feedxUpdateNav();
+
+        // Hide hint after 3 seconds
+        const hint = document.getElementById('feedx-hint');
+        hint.style.opacity = '1';
+        setTimeout(() => { hint.style.opacity = '0'; }, 3000);
+
+        // Attach touch events
+        const viewport = document.getElementById('feedx-viewport');
+        viewport.addEventListener('touchstart', feedxOnTouchStart, { passive: true });
+        viewport.addEventListener('touchend', feedxOnTouchEnd, { passive: true });
+
+        // Keyboard navigation
+        document.addEventListener('keydown', feedxOnKeyDown);
+
       } catch (err) {
         console.error("Error loading FeedX:", err);
-        contentDiv.innerHTML = '<div style="text-align:center; color:#ef4444; padding:20px;">Failed to load posts.</div>';
+        document.getElementById("feedx-slide").innerHTML =
+          '<div class="feedx-empty" style="color:#ef4444;">Failed to load posts. ⚠️</div>';
       }
     }
-    
+
+    function feedxRenderPost(index, direction) {
+      if (index < 0 || index >= feedxPosts.length) return;
+      const post = feedxPosts[index];
+      const dateStr = new Date(post.created_at).toLocaleDateString('en-IN', {
+        day: 'numeric', month: 'short', year: 'numeric',
+        hour: '2-digit', minute: '2-digit'
+      });
+
+      const slide = document.getElementById('feedx-slide');
+
+      if (direction !== 'none' && !feedxAnimating) {
+        feedxAnimating = true;
+        const outClass = direction === 'up' ? 'feedx-slide-out-up' : 'feedx-slide-out-down';
+        const inClass  = direction === 'up' ? 'feedx-slide-in-down' : 'feedx-slide-in-up';
+
+        slide.classList.add(outClass);
+        setTimeout(() => {
+          slide.classList.remove(outClass);
+          slide.innerHTML = feedxPostHTML(post, dateStr);
+          slide.classList.add(inClass);
+          setTimeout(() => {
+            slide.classList.remove(inClass);
+            feedxAnimating = false;
+          }, 320);
+        }, 220);
+      } else {
+        slide.innerHTML = feedxPostHTML(post, dateStr);
+      }
+
+      document.getElementById('feedx-counter').textContent = `${index + 1} / ${feedxPosts.length}`;
+      feedxUpdateDots(index);
+      feedxUpdateNav();
+    }
+
+    function feedxPostHTML(post, dateStr) {
+      return `
+        <div class="feedx-post-card">
+          <div class="feedx-post-header">
+            <span class="feedx-post-label">📰 FeedX Update</span>
+            <span class="feedx-post-date">${dateStr}</span>
+          </div>
+          <div class="feedx-post-img-wrap">
+            <img src="${post.image_base64}" class="feedx-post-img" alt="FeedX post" loading="lazy">
+          </div>
+        </div>
+      `;
+    }
+
+    function feedxBuildDots() {
+      const dotsEl = document.getElementById('feedx-dots');
+      dotsEl.innerHTML = feedxPosts.map((_, i) =>
+        `<span class="feedx-dot${i === feedxIndex ? ' active' : ''}" onclick="feedxGoTo(${i})"></span>`
+      ).join('');
+    }
+
+    function feedxUpdateDots(index) {
+      const dots = document.querySelectorAll('.feedx-dot');
+      dots.forEach((d, i) => d.classList.toggle('active', i === index));
+    }
+
+    function feedxUpdateNav() {
+      const prev = document.getElementById('feedx-prev');
+      const next = document.getElementById('feedx-next');
+      prev.style.opacity = feedxIndex === 0 ? '0.25' : '1';
+      prev.style.pointerEvents = feedxIndex === 0 ? 'none' : 'auto';
+      next.style.opacity = feedxIndex === feedxPosts.length - 1 ? '0.25' : '1';
+      next.style.pointerEvents = feedxIndex === feedxPosts.length - 1 ? 'none' : 'auto';
+    }
+
+    function feedxNavigate(delta) {
+      if (feedxAnimating) return;
+      const newIndex = feedxIndex + delta;
+      if (newIndex < 0 || newIndex >= feedxPosts.length) return;
+      const dir = delta > 0 ? 'up' : 'down';
+      feedxIndex = newIndex;
+      feedxRenderPost(feedxIndex, dir);
+    }
+
+    function feedxGoTo(index) {
+      if (feedxAnimating || index === feedxIndex) return;
+      const dir = index > feedxIndex ? 'up' : 'down';
+      feedxIndex = index;
+      feedxRenderPost(feedxIndex, dir);
+    }
+
+    function feedxOnTouchStart(e) {
+      feedxTouchStartY = e.changedTouches[0].clientY;
+      feedxTouchStartX = e.changedTouches[0].clientX;
+    }
+
+    function feedxOnTouchEnd(e) {
+      const dy = feedxTouchStartY - e.changedTouches[0].clientY;
+      const dx = Math.abs(feedxTouchStartX - e.changedTouches[0].clientX);
+      if (Math.abs(dy) < 40 || dx > Math.abs(dy)) return; // ignore horizontal / tiny swipes
+      feedxNavigate(dy > 0 ? 1 : -1);
+    }
+
+    function feedxOnKeyDown(e) {
+      if (document.getElementById('feedx-modal').style.display === 'none') return;
+      if (e.key === 'ArrowDown' || e.key === 'ArrowRight') feedxNavigate(1);
+      if (e.key === 'ArrowUp'   || e.key === 'ArrowLeft')  feedxNavigate(-1);
+      if (e.key === 'Escape') closeFeedX();
+    }
+
     function closeFeedX() {
       document.getElementById("feedx-modal").style.display = "none";
-      document.documentElement.style.overscrollBehavior = "";
       document.body.style.overflow = "";
-      document.body.style.overscrollBehavior = "";
+      // Remove listeners
+      const viewport = document.getElementById('feedx-viewport');
+      viewport.removeEventListener('touchstart', feedxOnTouchStart);
+      viewport.removeEventListener('touchend', feedxOnTouchEnd);
+      document.removeEventListener('keydown', feedxOnKeyDown);
+      feedxPosts = [];
+      feedxIndex = 0;
     }
 
     async function createUserIfNotExists(user) {
