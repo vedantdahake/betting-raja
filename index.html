@@ -60,6 +60,7 @@
               <button onclick="showFameShame()">Fame / Shame</button>
               <button id="add-match-menu-btn" onclick="showAddMatch()" style="display: none;">Add Match</button>
               <button id="upload-notice-menu-btn" onclick="showUploadNotice()" style="display: none;">Upload Notice</button>
+              <button id="analytics-menu-btn" onclick="showAnalytics()" style="display: none;">IPL Analytics</button>
               <button onclick="changeName()">Change Name</button>
               <button onclick="showAboutUs()">About Us</button>
             </div>
@@ -243,6 +244,79 @@
           </div>
         </div>
       </div>
+    </div>
+  </div>
+
+  <!-- ===== IPL Analytics Section (Admin Only) ===== -->
+  <div id="analytics-section" class="about-container" style="display: none;">
+    <div class="about-content an-content">
+      <button class="back-btn" onclick="hideAnalytics()">← Back to Dashboard</button>
+      <h2>IPL Analytics</h2>
+      <p style="color:#9da7b3; font-size:14px; margin-top:-15px; margin-bottom:20px;">Deep-dive into all match & prediction data.</p>
+
+      <!-- Tab Bar -->
+      <div class="an-tab-bar">
+        <button class="an-tab active" id="an-tab-h2h"        onclick="anSwitchTab('h2h')">⚔️ H2H</button>
+        <button class="an-tab"        id="an-tab-teams"      onclick="anSwitchTab('teams')">🏆 Teams</button>
+        <button class="an-tab"        id="an-tab-crowd"      onclick="anSwitchTab('crowd')">🎯 Crowd</button>
+        <button class="an-tab"        id="an-tab-users"      onclick="anSwitchTab('users')">👥 Users</button>
+        <button class="an-tab"        id="an-tab-popularity" onclick="anSwitchTab('popularity')">🌟 Popularity</button>
+        <button class="an-tab"        id="an-tab-versus"     onclick="anSwitchTab('versus')">🆚 1v1</button>
+      </div>
+
+      <!-- Tab Panels -->
+      <div id="an-panel-h2h" class="an-panel">
+        <h3 class="an-panel-title">⚔️ Team Head-to-Head Counter</h3>
+        <p class="an-panel-sub">Select two teams to see their head-to-head record in this app.</p>
+        <div class="an-h2h-selectors">
+          <select id="an-team-a" class="an-select"><option value="">Select Team A</option></select>
+          <span class="an-vs">VS</span>
+          <select id="an-team-b" class="an-select"><option value="">Select Team B</option></select>
+          <button class="an-go-btn" onclick="loadH2H()">Go ⚡</button>
+        </div>
+        <div id="an-h2h-result" class="an-h2h-result"></div>
+        <div id="an-h2h-matches" class="an-h2h-matches"></div>
+      </div>
+
+      <div id="an-panel-teams" class="an-panel" style="display:none;">
+        <h3 class="an-panel-title">🏆 Team Performance</h3>
+        <p class="an-panel-sub">Win %, total wins & losses for every team across all settled matches.</p>
+        <div id="an-teams-content" class="an-teams-content"><div class="an-loading">Loading…</div></div>
+        <div class="an-chart-wrap"><canvas id="an-teams-chart"></canvas></div>
+      </div>
+
+      <div id="an-panel-crowd" class="an-panel" style="display:none;">
+        <h3 class="an-panel-title">🎯 Crowd Prediction Analysis</h3>
+        <p class="an-panel-sub">How accurately did users predict each match? Highlights upsets.</p>
+        <div id="an-crowd-content"><div class="an-loading">Loading…</div></div>
+      </div>
+
+      <div id="an-panel-users" class="an-panel" style="display:none;">
+        <h3 class="an-panel-title">👥 User Insights</h3>
+        <p class="an-panel-sub">Top predictors by accuracy, points race over time, and team-preference stats.</p>
+        <div id="an-users-content"><div class="an-loading">Loading…</div></div>
+        <div class="an-chart-wrap" style="margin-top:20px;"><canvas id="an-points-race-chart"></canvas></div>
+      </div>
+
+      <div id="an-panel-popularity" class="an-panel" style="display:none;">
+        <h3 class="an-panel-title">🌟 Team Popularity vs Win Rate</h3>
+        <p class="an-panel-sub">How often each team is picked vs how often they actually win. Spot overrated &amp; underrated teams.</p>
+        <div id="an-pop-content"><div class="an-loading">Loading…</div></div>
+        <div class="an-chart-wrap" style="margin-top:16px;"><canvas id="an-pop-chart"></canvas></div>
+      </div>
+
+      <div id="an-panel-versus" class="an-panel" style="display:none;">
+        <h3 class="an-panel-title">🆚 User vs User Comparison</h3>
+        <p class="an-panel-sub">Pick any two users to compare their stats head-to-head.</p>
+        <div class="an-h2h-selectors">
+          <select id="an-user-a" class="an-select"><option value="">Select Player 1</option></select>
+          <span class="an-vs">VS</span>
+          <select id="an-user-b" class="an-select"><option value="">Select Player 2</option></select>
+          <button class="an-go-btn" onclick="loadAnVersus()">Compare ⚡</button>
+        </div>
+        <div id="an-versus-result"></div>
+      </div>
+
     </div>
   </div>
 
@@ -1336,6 +1410,7 @@
       // Show "Add Match" in menu for admins
       if (ADMIN_EMAILS.includes(user.email)) {
         document.getElementById("add-match-menu-btn").style.display = "block";
+        document.getElementById("analytics-menu-btn").style.display = "block";
       }
       
       // Restrict upload notice to specific email
@@ -2033,6 +2108,635 @@
       };
     }
 
+
+    // ============================================================
+    // ===== IPL ANALYTICS =========================================
+    // ============================================================
+
+    const AN_TEAMS = ['CSK','MI','RCB','KKR','DC','RR','SRH','PBKS','LSG','GT'];
+    const AN_TEAM_COLORS = {
+      'CSK':'#F7DC00','MI':'#004BA0','RCB':'#EC1C24','KKR':'#3A225D',
+      'DC':'#2563EB','RR':'#EA1A85','SRH':'#FF822A','PBKS':'#A50000',
+      'LSG':'#00AEEF','GT':'#6B7280'
+    };
+    let anTeamsChart = null;
+    let anRaceChart  = null;
+    let anLoadedTabs = new Set();
+    let anCurrentTab = 'h2h';
+
+    function showAnalytics() {
+      hideAllSections();
+      document.getElementById('analytics-section').style.display = 'block';
+      // Populate team dropdowns
+      ['an-team-a','an-team-b'].forEach(id => {
+        const sel = document.getElementById(id);
+        if (sel.options.length <= 1) {
+          AN_TEAMS.forEach(t => {
+            const o = document.createElement('option');
+            o.value = t; o.textContent = t;
+            sel.appendChild(o);
+          });
+        }
+      });
+      if (!anLoadedTabs.has('h2h')) anLoadedTabs.add('h2h'); // H2H is on-demand
+    }
+
+    function hideAnalytics() {
+      document.getElementById('analytics-section').style.display = 'none';
+      document.getElementById('dashboard').style.display = 'block';
+    }
+
+    function anSwitchTab(tab) {
+      // Hide all panels
+      ['h2h','teams','crowd','users','popularity','versus'].forEach(t => {
+        document.getElementById(`an-panel-${t}`).style.display = 'none';
+        document.getElementById(`an-tab-${t}`).classList.remove('active');
+      });
+      document.getElementById(`an-panel-${tab}`).style.display = 'block';
+      document.getElementById(`an-tab-${tab}`).classList.add('active');
+      anCurrentTab = tab;
+      if (!anLoadedTabs.has(tab)) {
+        anLoadedTabs.add(tab);
+        if (tab === 'teams')      loadAnTeams();
+        if (tab === 'crowd')      loadAnCrowd();
+        if (tab === 'users')      loadAnUsers();
+        if (tab === 'popularity') loadAnPopularity();
+        if (tab === 'versus')     populateVersusDropdowns();
+      }
+    }
+
+    // ---- Helper: normalize team name to abbreviation ----
+    function anNorm(name) {
+      if (!name) return '';
+      const n = name.trim().toUpperCase();
+      const map = {
+        'CHENNAI SUPER KINGS':'CSK','MUMBAI INDIANS':'MI',
+        'ROYAL CHALLENGERS BANGALORE':'RCB','ROYAL CHALLENGERS BENGALURU':'RCB',
+        'KOLKATA KNIGHT RIDERS':'KKR','DELHI CAPITALS':'DC',
+        'RAJASTHAN ROYALS':'RR','SUNRISERS HYDERABAD':'SRH',
+        'PUNJAB KINGS':'PBKS','LUCKNOW SUPER GIANTS':'LSG','GUJARAT TITANS':'GT'
+      };
+      return map[n] || n;
+    }
+
+    function anTeamColor(abbr) {
+      return AN_TEAM_COLORS[abbr] || '#334155';
+    }
+
+    // ============================================================
+    // TAB 1: H2H
+    // ============================================================
+    async function loadH2H() {
+      const teamA = document.getElementById('an-team-a').value;
+      const teamB = document.getElementById('an-team-b').value;
+      const resultEl  = document.getElementById('an-h2h-result');
+      const matchesEl = document.getElementById('an-h2h-matches');
+
+      if (!teamA || !teamB) { alert('Please select both teams.'); return; }
+      if (teamA === teamB)  { alert('Please select two different teams.'); return; }
+
+      resultEl.innerHTML  = '<div class="an-loading">Loading…</div>';
+      matchesEl.innerHTML = '';
+
+      try {
+        const { data, error } = await supabaseClient
+          .from('matches')
+          .select('*')
+          .neq('winner', null)
+          .order('match_date', { ascending: false });
+
+        if (error) throw error;
+
+        const h2h = (data || []).filter(m => {
+          const a = anNorm(m.team_a), b = anNorm(m.team_b);
+          return (a === teamA && b === teamB) || (a === teamB && b === teamA);
+        });
+
+        if (h2h.length === 0) {
+          resultEl.innerHTML = `<div class="an-empty">No settled matches between ${teamA} and ${teamB} yet.</div>`;
+          return;
+        }
+
+        const winsA = h2h.filter(m => anNorm(m.winner) === teamA).length;
+        const winsB = h2h.filter(m => anNorm(m.winner) === teamB).length;
+        const total = h2h.length;
+        const pctA  = ((winsA / total) * 100).toFixed(0);
+        const pctB  = ((winsB / total) * 100).toFixed(0);
+        const cA = anTeamColor(teamA), cB = anTeamColor(teamB);
+
+        resultEl.innerHTML = `
+          <div class="an-h2h-scoreboard">
+            <div class="an-h2h-team" style="border-color:${cA}">
+              <span class="an-h2h-abbr" style="color:${cA}">${teamA}</span>
+              <span class="an-h2h-wins" style="color:${cA}">${winsA}</span>
+              <span class="an-h2h-label">Wins</span>
+            </div>
+            <div class="an-h2h-center">
+              <span class="an-h2h-total">${total} Matches</span>
+              <div class="an-h2h-bar">
+                <div style="width:${pctA}%;background:${cA};height:100%;border-radius:4px 0 0 4px;"></div>
+                <div style="width:${pctB}%;background:${cB};height:100%;border-radius:0 4px 4px 0;"></div>
+              </div>
+              <div class="an-h2h-pct-row">
+                <span style="color:${cA}">${pctA}%</span>
+                <span style="color:${cB}">${pctB}%</span>
+              </div>
+            </div>
+            <div class="an-h2h-team" style="border-color:${cB}">
+              <span class="an-h2h-abbr" style="color:${cB}">${teamB}</span>
+              <span class="an-h2h-wins" style="color:${cB}">${winsB}</span>
+              <span class="an-h2h-label">Wins</span>
+            </div>
+          </div>
+        `;
+
+        matchesEl.innerHTML = `
+          <div class="an-match-list-title">Match History</div>
+          ${h2h.map(m => {
+            const winner = anNorm(m.winner);
+            const wc = anTeamColor(winner);
+            const dateStr = m.match_date ? new Date(m.match_date).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'}) : '—';
+            return `
+              <div class="an-match-row">
+                <span class="an-match-date">${dateStr}</span>
+                <span class="an-match-teams">${anNorm(m.team_a)} vs ${anNorm(m.team_b)}</span>
+                <span class="an-match-winner" style="color:${wc};border-color:${wc}40;background:${wc}15;">🏆 ${winner}</span>
+              </div>
+            `;
+          }).join('')}
+        `;
+
+      } catch(err) {
+        console.error('H2H error:', err);
+        resultEl.innerHTML = '<div class="an-empty" style="color:#ef4444">Failed to load. ⚠️</div>';
+      }
+    }
+
+    // ============================================================
+    // TAB 2: TEAM PERFORMANCE
+    // ============================================================
+    async function loadAnTeams() {
+      const el = document.getElementById('an-teams-content');
+      el.innerHTML = '<div class="an-loading">Loading…</div>';
+      try {
+        const { data, error } = await supabaseClient
+          .from('matches')
+          .select('team_a, team_b, winner')
+          .neq('winner', null);
+
+        if (error) throw error;
+
+        const stats = {};
+        AN_TEAMS.forEach(t => { stats[t] = { wins:0, losses:0, played:0 }; });
+
+        (data || []).forEach(m => {
+          const a = anNorm(m.team_a), b = anNorm(m.team_b), w = anNorm(m.winner);
+          if (stats[a]) { stats[a].played++; if (w === a) stats[a].wins++; else stats[a].losses++; }
+          if (stats[b]) { stats[b].played++; if (w === b) stats[b].wins++; else stats[b].losses++; }
+        });
+
+        const sorted = AN_TEAMS
+          .filter(t => stats[t].played > 0)
+          .sort((a,b) => (stats[b].wins/stats[b].played) - (stats[a].wins/stats[a].played));
+
+        if (sorted.length === 0) {
+          el.innerHTML = '<div class="an-empty">No settled matches yet.</div>'; return;
+        }
+
+        el.innerHTML = sorted.map((t, i) => {
+          const s = stats[t];
+          const wr = s.played > 0 ? ((s.wins/s.played)*100).toFixed(1) : '0.0';
+          const c  = anTeamColor(t);
+          const wrColor = parseFloat(wr) >= 60 ? '#22c55e' : parseFloat(wr) >= 40 ? '#f59e0b' : '#ef4444';
+          return `
+            <div class="an-team-row">
+              <span class="an-team-rank">${i+1}</span>
+              <span class="an-team-badge" style="background:${c}22;color:${c};border-color:${c}55">${t}</span>
+              <div class="an-team-bar-wrap">
+                <div class="an-team-bar-fill" style="width:${wr}%;background:${c};"></div>
+              </div>
+              <span class="an-team-wr" style="color:${wrColor}">${wr}%</span>
+              <span class="an-team-record">${s.wins}W – ${s.losses}L (${s.played} played)</span>
+            </div>
+          `;
+        }).join('');
+
+        // Bar chart
+        const ctx = document.getElementById('an-teams-chart').getContext('2d');
+        if (anTeamsChart) anTeamsChart.destroy();
+        anTeamsChart = new Chart(ctx, {
+          type: 'bar',
+          data: {
+            labels: sorted,
+            datasets: [
+              { label: 'Wins',   data: sorted.map(t=>stats[t].wins),   backgroundColor: sorted.map(t=>anTeamColor(t)), borderRadius: 6 },
+              { label: 'Losses', data: sorted.map(t=>stats[t].losses), backgroundColor: sorted.map(t=>anTeamColor(t)+'55'), borderRadius: 6 }
+            ]
+          },
+          options: {
+            responsive: true, maintainAspectRatio: false,
+            plugins: { legend: { labels: { color:'#9da7b3', font:{size:12} } } },
+            scales: {
+              x: { ticks:{color:'#9da7b3'}, grid:{display:false} },
+              y: { ticks:{color:'#9da7b3',stepSize:1}, grid:{color:'rgba(255,255,255,0.05)'} }
+            }
+          }
+        });
+
+      } catch(err) {
+        console.error('Teams error:', err);
+        el.innerHTML = '<div class="an-empty" style="color:#ef4444">Failed to load. ⚠️</div>';
+      }
+    }
+
+    // ============================================================
+    // TAB 3: CROWD PREDICTION ANALYSIS
+    // ============================================================
+    async function loadAnCrowd() {
+      const el = document.getElementById('an-crowd-content');
+      el.innerHTML = '<div class="an-loading">Loading…</div>';
+      try {
+        // Get all settled matches
+        const { data: matches, error: mErr } = await supabaseClient
+          .from('matches').select('*').neq('winner', null).order('match_date',{ascending:false});
+        if (mErr) throw mErr;
+
+        if (!matches || matches.length === 0) {
+          el.innerHTML = '<div class="an-empty">No settled matches yet.</div>'; return;
+        }
+
+        const { data: preds, error: pErr } = await supabaseClient
+          .from('predictions').select('match_id, predicted_winner');
+        if (pErr) throw pErr;
+
+        // Group predictions by match
+        const predMap = {};
+        (preds || []).forEach(p => {
+          if (!predMap[p.match_id]) predMap[p.match_id] = [];
+          predMap[p.match_id].push(anNorm(p.predicted_winner));
+        });
+
+        let html = '';
+        let totalMatches = 0, crowdRight = 0;
+        const upsets = [];
+
+        matches.forEach(m => {
+          const ps = predMap[m.id] || [];
+          if (ps.length === 0) return;
+          totalMatches++;
+
+          const winner = anNorm(m.winner);
+          const cntWinner = ps.filter(p => p === winner).length;
+          const cntOther  = ps.length - cntWinner;
+          const pctCrowd  = ((cntWinner / ps.length) * 100).toFixed(0);
+          const isUpset   = cntWinner < cntOther; // minority picked winner
+          if (!isUpset) crowdRight++;
+
+          if (isUpset) upsets.push({ match: m, pct: pctCrowd, total: ps.length });
+
+          const cW = anTeamColor(winner);
+          const tA = anNorm(m.team_a), tB = anNorm(m.team_b);
+          const dateStr = m.match_date ? new Date(m.match_date).toLocaleDateString('en-IN',{day:'numeric',month:'short'}) : '';
+
+          html += `
+            <div class="an-crowd-card ${isUpset ? 'upset' : 'correct'}">
+              <div class="an-crowd-top">
+                <span class="an-crowd-match">${tA} vs ${tB}</span>
+                <span class="an-crowd-date">${dateStr}</span>
+                ${isUpset ? '<span class="an-upset-badge">⚡ UPSET</span>' : ''}
+              </div>
+              <div class="an-crowd-bottom">
+                <span class="an-crowd-winner" style="color:${cW}">🏆 ${winner}</span>
+                <div class="an-crowd-bar-wrap" title="${pctCrowd}% picked ${winner}">
+                  <div class="an-crowd-bar-fill" style="width:${pctCrowd}%;background:${cW};"></div>
+                </div>
+                <span class="an-crowd-pct">${pctCrowd}% picked winner (${ps.length} votes)</span>
+              </div>
+            </div>
+          `;
+        });
+
+        // Summary at top
+        const overallAcc = totalMatches > 0 ? ((crowdRight/totalMatches)*100).toFixed(1) : '0';
+        const summaryHtml = `
+          <div class="an-crowd-summary">
+            <div class="an-sum-stat"><span class="an-sum-val">${totalMatches}</span><span class="an-sum-lbl">Matches</span></div>
+            <div class="an-sum-stat"><span class="an-sum-val" style="color:#22c55e">${crowdRight}</span><span class="an-sum-lbl">Crowd Correct</span></div>
+            <div class="an-sum-stat"><span class="an-sum-val" style="color:#ef4444">${upsets.length}</span><span class="an-sum-lbl">Upsets</span></div>
+            <div class="an-sum-stat"><span class="an-sum-val" style="color:#f59e0b">${overallAcc}%</span><span class="an-sum-lbl">Crowd Accuracy</span></div>
+          </div>
+        `;
+        el.innerHTML = summaryHtml + (html || '<div class="an-empty">No predictions data.</div>');
+
+      } catch(err) {
+        console.error('Crowd error:', err);
+        el.innerHTML = '<div class="an-empty" style="color:#ef4444">Failed to load. ⚠️</div>';
+      }
+    }
+
+    // ============================================================
+    // TAB 4: USER INSIGHTS
+    // ============================================================
+    async function loadAnUsers() {
+      const el = document.getElementById('an-users-content');
+      el.innerHTML = '<div class="an-loading">Loading…</div>';
+      try {
+        const [{ data: users, error: uErr }, { data: history, error: hErr }] = await Promise.all([
+          supabaseClient.from('users').select('id, name, wins, losses, points').order('wins',{ascending:false}),
+          supabaseClient.from('point_history').select('user_id, points, recorded_at').order('recorded_at',{ascending:true})
+        ]);
+        if (uErr) throw uErr;
+        if (hErr) throw hErr;
+
+        // Top predictors by win rate
+        const ranked = (users || []).map(u => ({
+          ...u,
+          total: u.wins + u.losses,
+          wr: (u.wins + u.losses) > 0 ? (u.wins / (u.wins + u.losses) * 100) : 0
+        })).filter(u => u.total > 0).sort((a,b) => b.wr - a.wr);
+
+        let html = '<div class="an-section-title">🎯 Top Predictors by Accuracy</div>';
+        html += '<div class="an-user-table">';
+        html += '<div class="an-user-header"><span>Rank</span><span>Player</span><span>Win Rate</span><span>Record</span><span>Points</span></div>';
+        ranked.forEach((u, i) => {
+          const wrc = u.wr >= 60 ? '#22c55e' : u.wr >= 40 ? '#f59e0b' : '#ef4444';
+          const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `${i+1}`;
+          html += `
+            <div class="an-user-row">
+              <span class="an-user-rank">${medal}</span>
+              <span class="an-user-name">${u.name}</span>
+              <span class="an-user-wr" style="color:${wrc}">${u.wr.toFixed(1)}%</span>
+              <span class="an-user-rec">${u.wins}W-${u.losses}L</span>
+              <span class="an-user-pts" style="color:${u.points>=0?'#22c55e':'#ef4444'}">${u.points>0?'+':''}${u.points}</span>
+            </div>
+          `;
+        });
+        html += '</div>';
+        el.innerHTML = html;
+
+        // Points race chart
+        if ((history || []).length > 0) {
+          const userMap = {};
+          (users || []).forEach(u => { userMap[u.id] = u.name; });
+
+          const byUser = {};
+          history.forEach(h => {
+            if (!byUser[h.user_id]) byUser[h.user_id] = [];
+            byUser[h.user_id].push({ x: h.recorded_at, y: h.points });
+          });
+
+          const palette = ['#22c55e','#38bdf8','#f59e0b','#f43f5e','#a78bfa','#34d399','#fb923c','#60a5fa','#e879f9','#fbbf24'];
+          const datasets = Object.entries(byUser).slice(0,8).map(([uid, pts], i) => ({
+            label: userMap[uid] || 'User',
+            data: pts.map((p,j) => ({ x: `M${j+1}`, y: p.y })),
+            borderColor: palette[i % palette.length],
+            backgroundColor: 'transparent',
+            borderWidth: 2,
+            pointRadius: 3,
+            tension: 0.4
+          }));
+
+          const allLabels = [...new Set(history.map((_,i)=> `M${i+1}`))].slice(0,50);
+
+          const ctx = document.getElementById('an-points-race-chart').getContext('2d');
+          if (anRaceChart) anRaceChart.destroy();
+          anRaceChart = new Chart(ctx, {
+            type: 'line',
+            data: { datasets },
+            options: {
+              responsive: true, maintainAspectRatio: false,
+              plugins: { legend: { labels: { color:'#9da7b3', font:{size:11}, boxWidth:12 } } },
+              scales: {
+                x: { ticks:{color:'#9da7b3',maxTicksLimit:10}, grid:{display:false} },
+                y: { ticks:{color:'#9da7b3'}, grid:{color:'rgba(255,255,255,0.05)'} }
+              }
+            }
+          });
+        }
+
+      } catch(err) {
+        console.error('Users analytics error:', err);
+        el.innerHTML = '<div class="an-empty" style="color:#ef4444">Failed to load. ⚠️</div>';
+      }
+    }
+
+    // ============================================================
+    // TAB: TEAM POPULARITY VS WIN RATE
+    // ============================================================
+    let anPopChart = null;
+    async function loadAnPopularity() {
+      const el = document.getElementById('an-pop-content');
+      el.innerHTML = '<div class="an-loading">Loading…</div>';
+      try {
+        const [{ data: matches, error: mErr }, { data: preds, error: pErr }] = await Promise.all([
+          supabaseClient.from('matches').select('id, team_a, team_b, winner').neq('winner', null),
+          supabaseClient.from('predictions').select('match_id, predicted_winner')
+        ]);
+        if (mErr) throw mErr;
+        if (pErr) throw pErr;
+
+        // Build pick count and win count per team
+        const pickCount = {}, winCount = {}, playCount = {};
+        AN_TEAMS.forEach(t => { pickCount[t] = 0; winCount[t] = 0; playCount[t] = 0; });
+
+        // Total predictions (for % calc)
+        let totalPicks = 0;
+        (preds || []).forEach(p => {
+          const t = anNorm(p.predicted_winner);
+          if (pickCount[t] !== undefined) { pickCount[t]++; totalPicks++; }
+        });
+
+        // Wins per team
+        (matches || []).forEach(m => {
+          const a = anNorm(m.team_a), b = anNorm(m.team_b), w = anNorm(m.winner);
+          if (playCount[a] !== undefined) playCount[a]++;
+          if (playCount[b] !== undefined) playCount[b]++;
+          if (winCount[w] !== undefined) winCount[w]++;
+        });
+
+        const teams = AN_TEAMS.filter(t => pickCount[t] > 0 || playCount[t] > 0);
+        if (teams.length === 0) {
+          el.innerHTML = '<div class="an-empty">Not enough data yet.</div>'; return;
+        }
+
+        const popPct  = teams.map(t => totalPicks > 0 ? ((pickCount[t] / totalPicks) * 100) : 0);
+        const winPct  = teams.map(t => playCount[t] > 0 ? ((winCount[t] / playCount[t]) * 100) : 0);
+        const diff    = teams.map((t, i) => popPct[i] - winPct[i]);
+
+        // Sort by popularity desc
+        const sorted = teams.map((t, i) => ({ t, pop: popPct[i], win: winPct[i], diff: diff[i], picks: pickCount[t], wins: winCount[t], played: playCount[t] }))
+          .sort((a, b) => b.pop - a.pop);
+
+        let html = '';
+        sorted.forEach(row => {
+          const c = anTeamColor(row.t);
+          const label = row.diff > 5 ? '🔴 Overrated' : row.diff < -5 ? '🟢 Underrated' : '🟡 Balanced';
+          const labelColor = row.diff > 5 ? '#ef4444' : row.diff < -5 ? '#22c55e' : '#f59e0b';
+          html += `
+            <div class="an-pop-row">
+              <div class="an-pop-header">
+                <span class="an-team-badge" style="background:${c}22;color:${c};border-color:${c}55">${row.t}</span>
+                <span class="an-pop-label" style="color:${labelColor}">${label}</span>
+                <span class="an-pop-meta">${row.picks} picks · ${row.wins}W/${row.played} played</span>
+              </div>
+              <div class="an-pop-bars">
+                <div class="an-pop-bar-group">
+                  <span class="an-pop-bar-lbl">Popularity</span>
+                  <div class="an-pop-bar-wrap">
+                    <div class="an-pop-bar-fill" style="width:${row.pop.toFixed(1)}%;background:${c};"></div>
+                  </div>
+                  <span class="an-pop-bar-val" style="color:${c}">${row.pop.toFixed(1)}%</span>
+                </div>
+                <div class="an-pop-bar-group">
+                  <span class="an-pop-bar-lbl">Win Rate</span>
+                  <div class="an-pop-bar-wrap">
+                    <div class="an-pop-bar-fill" style="width:${row.win.toFixed(1)}%;background:${row.diff>5?'#ef4444':row.diff<-5?'#22c55e':'#f59e0b'};"></div>
+                  </div>
+                  <span class="an-pop-bar-val" style="color:${row.diff>5?'#ef4444':row.diff<-5?'#22c55e':'#f59e0b'}">${row.win.toFixed(1)}%</span>
+                </div>
+              </div>
+            </div>
+          `;
+        });
+        el.innerHTML = html;
+
+        // Dual bar chart
+        const ctx = document.getElementById('an-pop-chart').getContext('2d');
+        if (anPopChart) anPopChart.destroy();
+        anPopChart = new Chart(ctx, {
+          type: 'bar',
+          data: {
+            labels: sorted.map(r => r.t),
+            datasets: [
+              { label: 'Popularity %', data: sorted.map(r => +r.pop.toFixed(1)), backgroundColor: sorted.map(r => anTeamColor(r.t)), borderRadius: 5 },
+              { label: 'Win Rate %',   data: sorted.map(r => +r.win.toFixed(1)), backgroundColor: sorted.map(r => anTeamColor(r.t)+'66'), borderRadius: 5 }
+            ]
+          },
+          options: {
+            responsive: true, maintainAspectRatio: false,
+            plugins: { legend: { labels: { color:'#9da7b3', font:{size:12} } } },
+            scales: {
+              x: { ticks:{color:'#9da7b3'}, grid:{display:false} },
+              y: { ticks:{color:'#9da7b3'}, grid:{color:'rgba(255,255,255,0.05)'}, max: 100 }
+            }
+          }
+        });
+
+      } catch(err) {
+        console.error('Popularity error:', err);
+        el.innerHTML = '<div class="an-empty" style="color:#ef4444">Failed to load. ⚠️</div>';
+      }
+    }
+
+    // ============================================================
+    // TAB: USER VS USER COMPARISON
+    // ============================================================
+    let anVersusUsers = [];
+    async function populateVersusDropdowns() {
+      try {
+        const { data: users } = await supabaseClient.from('users').select('id, name, wins, losses, points').order('points', { ascending: false });
+        anVersusUsers = users || [];
+        ['an-user-a', 'an-user-b'].forEach(id => {
+          const sel = document.getElementById(id);
+          if (sel.options.length <= 1) {
+            anVersusUsers.forEach(u => {
+              const o = document.createElement('option');
+              o.value = u.id; o.textContent = u.name;
+              sel.appendChild(o);
+            });
+          }
+        });
+      } catch(err) { console.error('Versus dropdown error:', err); }
+    }
+
+    async function loadAnVersus() {
+      const uidA = document.getElementById('an-user-a').value;
+      const uidB = document.getElementById('an-user-b').value;
+      const el   = document.getElementById('an-versus-result');
+
+      if (!uidA || !uidB) { alert('Please select both players.'); return; }
+      if (uidA === uidB)  { alert('Please select two different players.'); return; }
+
+      el.innerHTML = '<div class="an-loading">Loading…</div>';
+
+      try {
+        const uA = anVersusUsers.find(u => u.id === uidA);
+        const uB = anVersusUsers.find(u => u.id === uidB);
+
+        // Fetch streaks
+        const { data: streaks } = await supabaseClient
+          .from('user_streaks')
+          .select('user_id, max_win_streak, max_loss_streak, streak_count, streak_type')
+          .in('user_id', [uidA, uidB]);
+
+        const strA = (streaks || []).find(s => s.user_id === uidA) || {};
+        const strB = (streaks || []).find(s => s.user_id === uidB) || {};
+
+        // Fetch outcomes for both users
+        const { data: outA } = await supabaseClient.from('user_outcomes').select('outcome').eq('user_id', uidA);
+        const { data: outB } = await supabaseClient.from('user_outcomes').select('outcome').eq('user_id', uidB);
+
+        const totalA = (uA.wins || 0) + (uA.losses || 0);
+        const totalB = (uB.wins || 0) + (uB.losses || 0);
+        const wrA = totalA > 0 ? ((uA.wins / totalA) * 100).toFixed(1) : '0.0';
+        const wrB = totalB > 0 ? ((uB.wins / totalB) * 100).toFixed(1) : '0.0';
+
+        // Determine who wins each stat
+        const w = (a, b) => a > b ? 0 : b > a ? 1 : -1; // 0=A wins, 1=B wins, -1=tie
+        const highlight = (winner, side) => winner === side ? 'style="color:#22c55e;font-weight:900"' : winner === -1 ? 'style="color:#f59e0b"' : 'style="color:#9da7b3"';
+
+        const rows = [
+          { label: 'Points',         vA: uA.points || 0,           vB: uB.points || 0,           winner: w(uA.points||0, uB.points||0),  dispA: `${uA.points>0?'+':''}${uA.points||0}`,  dispB: `${uB.points>0?'+':''}${uB.points||0}` },
+          { label: 'Wins',           vA: uA.wins || 0,             vB: uB.wins || 0,             winner: w(uA.wins||0, uB.wins||0),      dispA: uA.wins||0,         dispB: uB.wins||0 },
+          { label: 'Losses',         vA: uA.losses || 0,           vB: uB.losses || 0,           winner: w(uB.losses||0, uA.losses||0),  dispA: uA.losses||0,       dispB: uB.losses||0 },
+          { label: 'Win Rate',       vA: parseFloat(wrA),          vB: parseFloat(wrB),          winner: w(parseFloat(wrA), parseFloat(wrB)), dispA: `${wrA}%`, dispB: `${wrB}%` },
+          { label: 'Matches Played', vA: totalA,                   vB: totalB,                   winner: w(totalA, totalB),              dispA: totalA,             dispB: totalB },
+          { label: 'Best Win Streak',vA: strA.max_win_streak||0,  vB: strB.max_win_streak||0,  winner: w(strA.max_win_streak||0, strB.max_win_streak||0), dispA: `${strA.max_win_streak||0} 🔥`, dispB: `${strB.max_win_streak||0} 🔥` },
+          { label: 'Worst Loss Streak', vA: strA.max_loss_streak||0, vB: strB.max_loss_streak||0, winner: w(strB.max_loss_streak||0, strA.max_loss_streak||0), dispA: `${strA.max_loss_streak||0} 💀`, dispB: `${strB.max_loss_streak||0} 💀` },
+        ];
+
+        // Tally wins for each user
+        const scoreA = rows.filter(r => r.winner === 0).length;
+        const scoreB = rows.filter(r => r.winner === 1).length;
+        const overallWinner = scoreA > scoreB ? uA.name : scoreB > scoreA ? uB.name : 'Tie';
+        const overallColor  = scoreA > scoreB ? '#22c55e' : scoreB > scoreA ? '#38bdf8' : '#f59e0b';
+
+        el.innerHTML = `
+          <div class="an-versus-scoreboard">
+            <div class="an-versus-player">
+              <span class="an-versus-name">${uA.name}</span>
+              <span class="an-versus-score" style="color:#22c55e">${scoreA}</span>
+            </div>
+            <div class="an-versus-center">
+              <span class="an-versus-verdict" style="color:${overallColor}">${overallWinner === 'Tie' ? '🤝 TIE' : '🏆 ' + overallWinner}</span>
+              <span class="an-versus-sublabel">wins the comparison</span>
+            </div>
+            <div class="an-versus-player">
+              <span class="an-versus-name">${uB.name}</span>
+              <span class="an-versus-score" style="color:#38bdf8">${scoreB}</span>
+            </div>
+          </div>
+          <div class="an-versus-table">
+            <div class="an-versus-header">
+              <span>${uA.name}</span>
+              <span>Stat</span>
+              <span>${uB.name}</span>
+            </div>
+            ${rows.map(r => `
+              <div class="an-versus-row">
+                <span class="an-versus-val" ${highlight(r.winner, 0)}>${r.dispA}</span>
+                <span class="an-versus-stat">${r.label}</span>
+                <span class="an-versus-val" ${highlight(r.winner, 1)}>${r.dispB}</span>
+              </div>
+            `).join('')}
+          </div>
+        `;
+
+      } catch(err) {
+        console.error('Versus error:', err);
+        el.innerHTML = '<div class="an-empty" style="color:#ef4444">Failed to load. ⚠️</div>';
+      }
+    }
 
   </script>
 </body>
