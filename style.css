@@ -2437,14 +2437,30 @@ button:hover {
 
 /* Mobile adjustments */
 @media (max-width: 600px) {
-  .an-content { padding: 16px !important; }
-  .an-tab { font-size: 11px !important; padding: 8px 10px !important; }
-  .an-h2h-scoreboard { flex-direction: column; }
-  .an-h2h-wins { font-size: 32px; }
-  .an-team-record { display: none; }
-  .an-user-rec { display: none; }
-  .an-crowd-pct { min-width: 100px; font-size: 10px; }
-  .an-act-name { flex: 0 0 100px; }
+  .an-content { padding: 12px !important; }
+  
+  .an-tab-bar {
+    gap: 4px;
+    margin-bottom: 16px;
+    justify-content: center;
+  }
+  .an-tab {
+    font-size: 10px !important;
+    padding: 6px 8px !important;
+    flex: 1 1 auto;
+    text-align: center;
+  }
+
+  .an-panel-title { font-size: 14px; }
+  .an-panel-sub { font-size: 11px; margin-bottom: 12px; }
+
+  .an-h2h-scoreboard { flex-direction: column; gap: 8px; }
+  .an-h2h-wins { font-size: 28px; }
+  .an-team-record, .an-user-rec { display: none; }
+  .an-crowd-pct { min-width: 70px; font-size: 10px; }
+  .an-act-name { flex: 0 0 80px; }
+  
+  .an-chart-wrap { height: 180px; padding: 8px; }
 }
 
 /* ============================================================
@@ -2644,8 +2660,17 @@ button:hover {
 
 @media (max-width: 600px) {
   .an-pop-meta { display: none; }
-  .an-versus-score { font-size: 36px; }
-  .an-versus-name { font-size: 13px; }
-  .an-versus-stat { font-size: 10px; padding: 3px 6px; }
-  .an-versus-val { font-size: 13px; }
+  .an-pop-header { gap: 6px; }
+  .an-pop-label { font-size: 10px; }
+  
+  .an-versus-scoreboard { padding: 12px 10px; gap: 6px; }
+  .an-versus-score { font-size: 28px; }
+  .an-versus-name { font-size: 12px; }
+  .an-versus-verdict { font-size: 13px; }
+  .an-versus-sublabel { font-size: 9px; }
+  
+  .an-versus-header { padding: 6px; font-size: 9px; }
+  .an-versus-row { padding: 8px 6px; gap: 4px; }
+  .an-versus-stat { font-size: 9px; padding: 3px 4px; white-space: normal; line-height: 1.1; }
+  .an-versus-val { font-size: 12px; }
 }
